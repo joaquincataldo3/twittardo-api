@@ -3,7 +3,11 @@ import schemas from "../../utils/schemaNames"
 import { Schema, Types } from "mongoose"
 
   const userSchema = new Schema ({
-    user: {
+    username: {
+      type: String,
+      required: true
+    },
+    email: {
       type: String,
       required: true
     },
@@ -16,11 +20,16 @@ import { Schema, Types } from "mongoose"
     },
     twitts: [{
       type: Types.ObjectId,
-      ref: schemas.twitt
+      ref: schemas.twitts
     }],
-    isAdmin: {
-      type: Boolean,
-    },
+    followers: [{
+      type: Types.ObjectId,
+      ref: schemas.users
+    }],
+    following: [{
+      type: Types.ObjectId,
+      ref: schemas.users
+    }],
     createdAt: {
       type: Date,
       default: () => Date.now(),
@@ -28,6 +37,6 @@ import { Schema, Types } from "mongoose"
     }
   });
 
-const model = mongoose.model(schemas.user, userSchema)
+const model = mongoose.model(schemas.users, userSchema)
 
 export default model

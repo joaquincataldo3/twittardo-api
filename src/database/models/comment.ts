@@ -9,11 +9,11 @@ const commentSchema = new Schema  ({
     },
     user: {
         type: Types.ObjectId,
-        ref: schemas.user, 
+        ref: schemas.users, 
         required: true
     }
 })
 
-const model = mongoose.model(schemas.comment, commentSchema)
+const model = mongoose.model(schemas.comments, commentSchema)
 
 export default model

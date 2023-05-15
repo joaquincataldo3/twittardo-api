@@ -1,15 +1,15 @@
 type SchemaName = {
-    user: string,
-    admin: string
-    twitt: string, 
-    comment: string
+    users: string,
+    admins: string
+    twitts: string, 
+    comments: string
 }
 
 const schemas: SchemaName = {
-    user: 'user',
-    admin: 'admin',
-    twitt: 'twitt',
-    comment: 'comment'
+    users: 'users',
+    admins: 'admins',
+    twitts: 'twitts',
+    comments: 'comments'
 }
 
 export default schemas

@@ -7,18 +7,22 @@ const twittSchema = new Schema ({
         type: String,
         required: true
     },
+    image: {
+        type: Types.ObjectId,
+        ref: schemas.users
+    },
     user: {
         type: Types.ObjectId,
-        ref: schemas.user, 
+        ref: schemas.users, 
         required: true
     },
     comments: [{
         type: Types.ObjectId,
-        ref: schemas.comment
+        ref: schemas.comments
     }]
 
 })
 
-const model = mongoose.model(schemas.twitt, twittSchema)
+const model = mongoose.model(schemas.twitts, twittSchema)
 
 export default model

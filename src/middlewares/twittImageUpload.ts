@@ -5,10 +5,9 @@ type Request = express.Request
 
 const storage = multer.diskStorage({
     destination: (_req: Request, _file, cb) => {
-        cb(null, 'images/avatar');
+        cb(null, 'images/twitsImages');
     },
     filename: (_req: Request, file, cb) => {
-
         cb(null, file.originalname)
     }
 })
