@@ -1,5 +1,6 @@
 import express from 'express'
 import userRouter from './routes/user'
+import twittRouter from './routes/twitt'
 import mongoose from 'mongoose'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
@@ -14,6 +15,7 @@ app.use(cookieParser())
 
 app.use(express.json())
 app.use('/user', userRouter)
+app.use('/twitt', twittRouter)
 
 mongoose.set('strictQuery', false)
 mongoose.connect(MONGO_URI)

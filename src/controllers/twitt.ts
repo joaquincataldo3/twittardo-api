@@ -4,7 +4,6 @@ import { TwittT } from '../types'
 
 
 const controller = {
-
     createTwitt: async (req: Request, res: Response) => {
 
         try {
@@ -29,9 +28,7 @@ const controller = {
         }
 
 
-
     }
-
 }
 
 export default controller
