@@ -1,11 +1,6 @@
-type SchemaName = {
-    users: string,
-    admins: string
-    twitts: string, 
-    comments: string
-}
+import { SchemaNameT } from "../types"
 
-const schemas: SchemaName = {
+const schemas: SchemaNameT = {
     users: 'users',
     admins: 'admins',
     twitts: 'twitts',

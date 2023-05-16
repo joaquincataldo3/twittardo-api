@@ -11,3 +11,15 @@ export type TwittT = {
     user: string,
     comments?: string[]
 }
+
+export type CommentT = {
+    comment: string,
+    user: string
+}
+
+export type SchemaNameT = {
+    users: string,
+    admins: string
+    twitts: string, 
+    comments: string
+}
