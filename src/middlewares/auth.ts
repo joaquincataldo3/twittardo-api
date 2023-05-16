@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken'
-import { Response } from 'express'
-import { GetInfoAuthRequest } from '../utils/getUserInfoInReq'
+import { Response, NextFunction } from 'express'
+import { GetInfoAuthRequest } from '../utils/getUserReq'
 import User from '../database/models/user'
 
-const verifyToken = (req: GetInfoAuthRequest, res: Response, next: Function) => {
+const verifyToken = (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
 
     const jwtKey = process.env.JWT
     const token = req.cookies.user_access_token
@@ -24,7 +24,7 @@ const verifyToken = (req: GetInfoAuthRequest, res: Response, next: Function) => 
 }
 
 
-const verifyAdmin = async (req: GetInfoAuthRequest, res: Response, next: Function) => {
+const verifyAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
 
         const compareUser = await User.find({id: req.user.id})
 

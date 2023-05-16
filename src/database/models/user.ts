@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 import schemas from "../../utils/schemaNames"
 import { Schema, Types } from "mongoose"
 
-  const userSchema = new Schema ({
+  const userSchema: Schema = new Schema ({
     username: {
       type: String,
       required: true

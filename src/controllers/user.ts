@@ -1,9 +1,11 @@
 
 import { Request, Response } from 'express'
 import User from '../database/models/user'
+import { UserT } from '../types'
 import { isValidObjectId } from 'mongoose'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+
 
 
 const controller = {
@@ -13,7 +15,7 @@ const controller = {
             res.status(200).json(users)
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: 'Problema mientras se buscaban los usuarios' })
+            res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` })
         }
 
     },
@@ -31,15 +33,55 @@ const controller = {
             res.status(200).json(user)
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: 'Problema mientras se buscaba el usuario especificado' })
+            res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
         }
 
+    },
+    follow: async(req: Request, res: Response) => {
+        try {
+            const userBeingFollowedId = req.query.mu;
+            const userWantingToFollowId = req.query.uf;
+
+            if (!isValidObjectId(userBeingFollowedId) || isValidObjectId(userWantingToFollowId)) {
+                res.status(400).json({ msg: 'Id de usuarios invalidos' })
+            }
+
+            const getUserBeingFollowed = await User.findById(userBeingFollowedId);
+            const getUserWantingToFollow = await User.findById(userWantingToFollowId);
+
+            if (!getUserBeingFollowed || !getUserWantingToFollow) {
+                res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' })
+            }
+
+
+            const UserBeingFollowedUpdated = await User.findByIdAndUpdate(userBeingFollowedId, 
+                {
+                $addToSet: { 
+                    followers: userWantingToFollowId,
+                },
+            }, {
+                new: true
+            }).populate('followers', 'following')
+
+            const userFollowingUpdated = await User.findByIdAndUpdate(userWantingToFollowId, 
+                {
+                $addToSet: { 
+                    following: userBeingFollowedId,
+                },
+            }, {
+                new: true
+            }).populate('followers', 'following')
+
+
+            res.status(201).json({userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated})
+
+        } catch (error) {
+            res.json({ msg: 'Error mientras se seguía al usuario'})
+        }
     },
     register: (async (req: Request, res: Response) => {
         try {
             const { email, username, password } = req.body
-
-
 
             const emailAlreadyInDb = await User.find({ email })
             const usernameAlreadyInDb = await User.find({ username })
@@ -54,17 +96,22 @@ const controller = {
 
             const hashPassword = bcrypt.hashSync(password, 10)
 
-            const newUser = await User.create({ email, username, password: hashPassword })
-
-            //  TODO -- CREATE AVATAR MODEL AND COLLECTION OR LOGIC TO INSERT THE AVATAR AFTER
-            if (req.file) {
-                // const avatar = req.file.filename
+            const newUserData : UserT = {
+                email,
+                username,
+                password: hashPassword,
             }
+
+            if (req.file) {
+                newUserData.avatar = req.file.filename
+            }
+
+            const newUser = await User.create({ email, username, password: hashPassword })            
 
             res.status(201).json(newUser);
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: 'Problema mientras se registraba el usuario' })
+            res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
         }
 
     }),
@@ -83,24 +130,26 @@ const controller = {
                 res.status(404).json({ msg: 'Usuario no encontrado' })
             } else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
-                const data = {
+
+                const dataToUpdate : UserT = {
                     username: req.body.username ? req.body.username : user.username,
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
-                    
                 }
 
-                const updatedUser = await User.findByIdAndUpdate(userId, data, { new: true })
+                if(req.file) {
+                    dataToUpdate.avatar = req.file.filename
+                }
+
+                const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })
 
                 res.status(200).json(updatedUser)
             }
-
-            // image: req.file ? req.file.path : user.avatar.path,
     
 
         } catch (error) {
             console.log(error)
-            res.json({ msg: `Error while processing the update of a movie: ${error}` })
+            res.status(400).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
         }
     },
     /* pushAvatar: async (req: Request, res: Response) => {
@@ -153,7 +202,7 @@ const controller = {
             }
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: 'Problema mientras se logueaba al usuario' })
+            res.status(400).json({ msg: `Problema mientras se logueaba al usuario: ${error}` })
         }
 
     }),

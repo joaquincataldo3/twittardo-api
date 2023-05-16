@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 import schemas from "../../utils/schemaNames"
 import { Schema, Types} from "mongoose"
 
-const twittSchema = new Schema ({
+const twittSchema: Schema = new Schema ({
     twitt: {
         type: String,
         required: true

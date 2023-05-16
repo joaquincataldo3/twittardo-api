@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 import schemas from "../../utils/schemaNames"
 import { Schema, Types} from "mongoose"
 
-const commentSchema = new Schema  ({
+const commentSchema: Schema =new Schema  ({
     comment: {
         type: String,
         required: true
