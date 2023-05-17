@@ -6,8 +6,6 @@ import { isValidObjectId } from 'mongoose'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
-
-
 const controller = {
     allUsers: async (_req: Request, res: Response) => {
         try {
@@ -97,9 +95,9 @@ const controller = {
                 if (!verifyPassword) {
                     res.status(404).json({ msg: 'Credenciales invalidas' })
                 }
-                const secretKey = process.env.JWT
+                const secretKey = process.env.JWT!
 
-                const token = jwt.sign({ ...user, isAdmin: false }, secretKey)
+                const token = jwt.sign(user, secretKey)
 
                 res.cookie('user_access_token', token, {
                     httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
