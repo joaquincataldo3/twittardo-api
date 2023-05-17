@@ -37,7 +37,7 @@ const controller = {
         }
 
     },
-    follow: async(req: Request, res: Response) => {
+    follow: async (req: Request, res: Response) => {
         try {
             const userBeingFollowedId = req.query.mu;
             const userWantingToFollowId = req.query.uf;
@@ -54,125 +54,32 @@ const controller = {
             }
 
 
-            const UserBeingFollowedUpdated = await User.findByIdAndUpdate(userBeingFollowedId, 
+            const UserBeingFollowedUpdated = await User.findByIdAndUpdate(userBeingFollowedId,
                 {
-                $addToSet: { 
-                    followers: userWantingToFollowId,
-                },
-            }, {
+                    $addToSet: {
+                        followers: userWantingToFollowId,
+                    },
+                }, {
                 new: true
             }).populate('followers', 'following')
 
-            const userFollowingUpdated = await User.findByIdAndUpdate(userWantingToFollowId, 
+            const userFollowingUpdated = await User.findByIdAndUpdate(userWantingToFollowId,
                 {
-                $addToSet: { 
-                    following: userBeingFollowedId,
-                },
-            }, {
+                    $addToSet: {
+                        following: userBeingFollowedId,
+                    },
+                }, {
                 new: true
             }).populate('followers', 'following')
 
 
-            res.status(201).json({userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated})
+            res.status(201).json({ userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated })
 
         } catch (error) {
-            res.json({ msg: 'Error mientras se seguía al usuario'})
+            res.json({ msg: 'Error mientras se seguía al usuario' })
         }
     },
-    register: (async (req: Request, res: Response) => {
-        try {
-            const { email, username, password } = req.body
-
-            const emailAlreadyInDb = await User.find({ email })
-            const usernameAlreadyInDb = await User.find({ username })
-
-            if (emailAlreadyInDb || usernameAlreadyInDb) {
-                res.status(409).json({ msg: 'Nombre de usuario o email están en uso' })
-            }
-
-            if (!email || !username || !password) {
-                res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
-            }
-
-            const hashPassword = bcrypt.hashSync(password, 10)
-
-            const newUserData : UserT = {
-                email,
-                username,
-                password: hashPassword,
-            }
-
-            if (req.file) {
-                newUserData.avatar = req.file.filename
-            }
-
-            const newUser = await User.create({ email, username, password: hashPassword })            
-
-            res.status(201).json(newUser);
-        } catch (error) {
-            console.log(error)
-            res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
-        }
-
-    }),
-    updateUser: async (req: Request, res: Response) => {
-
-        try {
-            const userId = req.params.userId;
-
-            if (!isValidObjectId(userId)) {
-                res.status(400).json({ msg: 'Movie ID invalid' })
-            }
-
-            const userToFind = await User.findById(userId)
-
-            if (!userToFind) {
-                res.status(404).json({ msg: 'Usuario no encontrado' })
-            } else { // i had to do this because userToFind is possibly null
-                const user = userToFind;
-
-                const dataToUpdate : UserT = {
-                    username: req.body.username ? req.body.username : user.username,
-                    email: req.body.email ? req.body.email : user.email,
-                    password: req.body.password ? req.body.password : user.password,
-                }
-
-                if(req.file) {
-                    dataToUpdate.avatar = req.file.filename
-                }
-
-                const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })
-
-                res.status(200).json(updatedUser)
-            }
-    
-
-        } catch (error) {
-            console.log(error)
-            res.status(400).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
-        }
-    },
-    /* pushAvatar: async (req: Request, res: Response) => {
-
-    }, */ 
-    deleteUser: async (req: Request, res: Response) => {
-        try {
-            const userId = req.params.id
-
-            if (!isValidObjectId(userId)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' })
-            }
-
-            await User.findByIdAndRemove(userId)
-
-            res.status(200).json(userId)
-
-        } catch (error) {
-            console.log(error)
-            res.json({ msg: 'Problema mientras se eliminaba el usuario' })
-        }
-
-    }, login: (async (req: Request, res: Response) => {
+    login: (async (req: Request, res: Response) => {
         try {
             const { password, email } = req.body
 
@@ -206,10 +113,134 @@ const controller = {
         }
 
     }),
+    register: (async (req: Request, res: Response) => {
+        try {
+            const { email, username, password } = req.body
+
+            const emailAlreadyInDb = await User.find({ email })
+            const usernameAlreadyInDb = await User.find({ username })
+
+            if (emailAlreadyInDb || usernameAlreadyInDb) {
+                res.status(409).json({ msg: 'Nombre de usuario o email están en uso' })
+            }
+
+            if (!email || !username || !password) {
+                res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
+            }
+
+            const hashPassword = bcrypt.hashSync(password, 10)
+
+            const newUserData: UserT = {
+                email,
+                username,
+                password: hashPassword,
+                isAdmin: false
+            }
+
+            if (req.file) {
+                newUserData.avatar = req.file.filename
+            }
+
+            const newUser = await User.create({ email, username, password: hashPassword })
+
+            res.status(201).json(newUser);
+        } catch (error) {
+            console.log(error)
+            res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
+        }
+
+    }),
+    updateUser: async (req: Request, res: Response) => {
+        try {
+            const userId = req.params.userId;
+
+            if (!isValidObjectId(userId)) {
+                res.status(400).json({ msg: 'Id de usuario invalido' })
+            }
+
+            const userToFind = await User.findById(userId)
+
+            if (!userToFind) {
+                res.status(404).json({ msg: 'Usuario no encontrado' })
+            } else { // i had to do this because userToFind is possibly null
+                const user = userToFind;
+
+                const dataToUpdate: UserT = {
+                    username: req.body.username ? req.body.username : user.username,
+                    email: req.body.email ? req.body.email : user.email,
+                    password: req.body.password ? req.body.password : user.password,
+                    isAdmin: false
+                }
+
+                if (req.file) {
+                    dataToUpdate.avatar = req.file.filename
+                }
+
+                const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })
+
+                res.status(200).json(updatedUser)
+            }
+
+
+        } catch (error) {
+            console.log(error)
+            res.status(400).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
+        }
+    },
+    convertUserToAdmin: async (req: Request, res: Response) => {
+
+        try {
+            const userId = req.params.userId;
+            const adminKeyInBody = req.body.adminKey
+            const adminKey = process.env.ADMIN_KEY
+
+            if (!isValidObjectId(userId)) {
+                res.status(400).json({ msg: 'Id de usuario invalido' })
+            }
+
+            if (adminKeyInBody === adminKey) {
+                const userToFind = await User.findByIdAndUpdate(userId, { isAdmin: true }, { new: true })
+
+                if (!userToFind) {
+                    res.status(404).json({ msg: 'Usuario no encontrado' })
+                } else {
+                    const admin = userToFind
+                    res.status(200).json(admin)
+                }
+
+            } else {
+                res.status(400).json({ msg: 'Key de admin incorrecta' })
+            }
+
+        } catch (error) {
+            console.log(error)
+            res.status(400).json({ msg: `Problema mientras se convertia al usuario en admin: ${error}` })
+        }
+
+
+    },
+    deleteUser: async (req: Request, res: Response) => {
+        try {
+            const userId = req.params.userId
+
+            if (!isValidObjectId(userId)) {
+                res.status(400).json({ msg: 'Id de usuario invalido' })
+            }
+
+            await User.findByIdAndRemove(userId)
+
+            res.status(200).json(userId)
+
+        } catch (error) {
+            console.log(error)
+            res.status(400).json({ msg: `Problema mientras se eliminaba el usuario: ${error}` })
+        }
+
+    },
     logout: (_req: Request, res: Response) => {
         res.cookie('user_access_token', '', { maxAge: 1 })
         res.status(200).json({ msg: "Fuiste deslogueado" })
-    },
+    }
 }
 
 export default controller

@@ -33,11 +33,9 @@ const controller = {
 
             const newComment = await Comment.create(commentData)
 
-            // TODO - CREATE COMMENT IN TWITT SCHEMA
-
             const pushCommentInTwitt = await Twitt.findByIdAndUpdate(twittId, 
                 {
-                $addToSet: { // it pushes the actor in case is not found
+                $addToSet: { 
                     comments: newComment._id
                 },
             }, {
@@ -51,13 +49,13 @@ const controller = {
             res.status(400).json({msg: `Problema mientras se creaba un comentario: ${error}`})
         }
     },
-    deleteTwitt: async (req: Request, res: Response) => {
+    deleteComment: async (req: Request, res: Response) => {
 
         try {
             const commentIdToDelete = req.params.commentId
 
             if(!isValidObjectId(commentIdToDelete)){
-                res.status(400).json({msg: 'Twitt id invalido'})
+                res.status(400).json({msg: 'Comentario id invalido'})
             }
 
             await Comment.findByIdAndRemove(commentIdToDelete)
@@ -67,10 +65,7 @@ const controller = {
         } catch (error) {
             console.log(error)
             res.status(400).json({msg: `Problema mientras se borraba un comentario: ${error}`})
-        }
-       
-
-
+        } 
     }
 }
 

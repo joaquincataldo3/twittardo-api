@@ -63,10 +63,12 @@ const controller = {
             })
             
             res.status(200).json({ user, token }) 
-        }
-
-       
-    })
+        } 
+    }),
+    logout: (_req: Request, res: Response) => {
+        res.cookie('user_access_token', '', { maxAge: 1 })
+        res.status(200).json({ msg: "Fuiste deslogueado" })
+    }
 }
 
 export default controller

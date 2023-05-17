@@ -2,6 +2,7 @@ export type UserT = {
     email: string,
     username: string,
     password: string,
+    isAdmin: boolean,
     avatar?: string
 }
 

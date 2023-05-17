@@ -24,9 +24,11 @@ const verifyToken = (req: GetInfoAuthRequest, res: Response, next: NextFunction)
 }
 
 
-const verifyAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
+const verifyUserOrAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
 
         const compareUser = await User.find({id: req.user.id})
+
+        console.log(req.user)
 
         if (req.user.isAdmin || compareUser) {
             next()
@@ -34,9 +36,19 @@ const verifyAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFun
             res.status(403).json({msg: 'No estás autorizado a performar esta acción'})
         }
        
-    
+}
+
+const verifyAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
+
+    if (req.user.isAdmin) {
+        next()
+    } else {
+        res.status(403).json({msg: 'No estás autorizado a performar esta acción'})
+    }
+   
+
 }
 
 
 
-module.exports = { verifyToken, verifyAdmin }
+export {verifyToken, verifyUserOrAdmin, verifyAdmin}

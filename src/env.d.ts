@@ -5,6 +5,7 @@ declare global {
         interface ProcessEnv {
             MONGO_URI : any
             JWT : string
+            ADMIN_KEY: string
         }
     }
 }

@@ -12,10 +12,10 @@ const app = express()
 const MONGO_URI = process.env.MONGO_URI
 
 app.use(cookieParser())
-
 app.use(express.json())
-app.use('/user', userRouter)
-app.use('/twitt', twittRouter)
+
+app.use('/users', userRouter)
+app.use('/twitts', twittRouter)
 
 mongoose.set('strictQuery', false)
 mongoose.connect(MONGO_URI)
