@@ -24,6 +24,8 @@ const verifyToken = (req: GetInfoAuthRequest, res: Response, next: NextFunction)
 }
 
 
+
+// TODO - MODIFY MIDDLEWARE TO ASK FOR FIELD IS ADMIN
 const verifyUserOrAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
 
         const compareUser = await User.find({id: req.user.id})

@@ -3,9 +3,9 @@
 declare global {
     namespace NodeJS {
         interface ProcessEnv {
-            MONGO_URI : string
-            JWT : string
-            ADMIN_KEY: string
+            MONGO_URI : string 
+            JWT : string 
+            ADMIN_KEY: string 
         }
     }
 }
