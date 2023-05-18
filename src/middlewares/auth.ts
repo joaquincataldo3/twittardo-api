@@ -9,18 +9,22 @@ const verifyToken = (req: GetInfoAuthRequest, res: Response, next: NextFunction)
     const token = req.cookies.user_access_token
 
     if (!token) {
-        res.status(401).json({msg: 'No estás autenticado'})
+        res.status(401).json({ msg: 'No estás autenticado' })
     }
 
-    jwt.verify(token, jwtKey, (err: any, user: any) => {
-        if (err) {
-            res.status(403).json({msg: 'Token invalido'})
-        } 
-        
-        req.user = user
-        next()
-       
-    })
+    if (jwtKey) {
+        jwt.verify(token, jwtKey, (err: any, user: any) => {
+            if (err) {
+                res.status(403).json({ msg: 'Token invalido' })
+            }
+
+            req.user = user
+            next()
+
+        })
+    }
+
+
 }
 
 
@@ -28,16 +32,16 @@ const verifyToken = (req: GetInfoAuthRequest, res: Response, next: NextFunction)
 // TODO - MODIFY MIDDLEWARE TO ASK FOR FIELD IS ADMIN
 const verifyUserOrAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
 
-        const compareUser = await User.find({id: req.user.id})
+    const compareUser = await User.find({ id: req.user.id })
 
-        console.log(req.user)
+    console.log(req.user)
 
-        if (req.user.isAdmin || compareUser) {
-            next()
-        } else {
-            res.status(403).json({msg: 'No estás autorizado a performar esta acción'})
-        }
-       
+    if (req.user.isAdmin || compareUser) {
+        next()
+    } else {
+        res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
+    }
+
 }
 
 const verifyAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
@@ -45,12 +49,12 @@ const verifyAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFun
     if (req.user.isAdmin) {
         next()
     } else {
-        res.status(403).json({msg: 'No estás autorizado a performar esta acción'})
+        res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
     }
-   
+
 
 }
 
 
 
-export {verifyToken, verifyUserOrAdmin, verifyAdmin}
+export { verifyToken, verifyUserOrAdmin, verifyAdmin }
