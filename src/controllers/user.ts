@@ -97,7 +97,7 @@ const controller = {
                 }
                 const secretKey = process.env.JWT!
 
-                const token = jwt.sign(user, secretKey)
+                const token = jwt.sign({...user}, secretKey)
 
                 res.cookie('user_access_token', token, {
                     httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
