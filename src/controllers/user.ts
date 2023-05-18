@@ -189,14 +189,14 @@ const controller = {
 
         try {
             const userId = req.params.userId;
-            const adminKeyInBody = req.body.adminKey
+            const key = req.body.key
             const adminKey = process.env.ADMIN_KEY
 
             if (!isValidObjectId(userId)) {
                 res.status(400).json({ msg: 'Id de usuario invalido' })
             }
 
-            if (adminKeyInBody === adminKey) {
+            if (key === adminKey) {
                 const userToFind = await User.findByIdAndUpdate(userId, { isAdmin: true }, { new: true })
 
                 if (!userToFind) {

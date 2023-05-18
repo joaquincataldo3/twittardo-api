@@ -31,7 +31,8 @@ const verifyToken = (req: GetInfoAuthRequest, res: Response, next: NextFunction)
 // TODO - MODIFY MIDDLEWARE TO ASK FOR FIELD IS ADMIN
 const verifyUserOrAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
 
-    const compareUser = await User.find({ id: req.user.id })
+    try {
+        const compareUser = await User.find({ id: req.user.id })
 
     console.log(req.user)
 
@@ -41,19 +42,21 @@ const verifyUserOrAdmin = async (req: GetInfoAuthRequest, res: Response, next: N
         res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
     }
 
+    } catch (error) {
+        console.log(error)
+        res.status(400).json({ msg: `Problema mientras se verificaba usuario o admin: ${error}`})
+    }
+
+    
 }
 
-const verifyAdmin = async (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
-
+const verifyAdmin = (req: GetInfoAuthRequest, res: Response, next: NextFunction) => {
     if (req.user.isAdmin) {
         next()
     } else {
         res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
     }
-
-
 }
-
 
 
 export { verifyToken, verifyUserOrAdmin, verifyAdmin }
