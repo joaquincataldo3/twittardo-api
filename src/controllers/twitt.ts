@@ -8,16 +8,27 @@ const controller = {
     allTwitts: async (_req: Request, res: Response) => {
         try {
             const twitts = await Twitt.find()
-            res.status(200).json(twitts)
+            return res.status(200).json(twitts)
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: `Problema mientras se buscaban los twitts: ${error}` })
+            return res.status(400).json({ msg: `Problema mientras se buscaban los twitts: ${error}` })
+        }
+
+    },
+     oneTwitt: async (req: Request, res: Response) => {
+        try {
+            const twittId = req.params.twittId
+            const twitt = await Twitt.findById(twittId)
+            return res.status(200).json(twitt)
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json({ msg: `Problema mientras se buscaba un twitt en particular: ${error}` })
         }
 
     },
     createTwitt: async (req: Request, res: Response) => {
         try {
-            const userId = req.params.id
+            const userId = req.params.userId
 
             const twittData: TwittT = {
                 twitt: req.body.twitt,
@@ -30,11 +41,11 @@ const controller = {
 
             const newTwitt = await Twitt.create(twittData)
 
-            res.status(200).json(newTwitt)
+            return res.status(200).json(newTwitt)
 
         } catch (error) {
             console.log(error)
-            res.status(400).json({msg: `Problema mientras se creaba un twitt: ${error}`})
+            return res.status(400).json({msg: `Problema mientras se creaba un twitt: ${error}`})
         }
     },
     deleteTwitt: async (req: Request, res: Response) => {
@@ -43,16 +54,16 @@ const controller = {
             const twittIdToDelete = req.params.twittIdToDelete
 
             if(!isValidObjectId(twittIdToDelete)){
-                res.status(400).json({msg: 'Twitt id invalido'})
+                return res.status(400).json({msg: 'Twitt id invalido'})
             }
 
             await Twitt.findByIdAndRemove(twittIdToDelete)
 
-            res.status(200).json(twittIdToDelete)
+            return res.status(200).json(twittIdToDelete)
 
         } catch (error) {
             console.log(error)
-            res.status(400).json({msg: `Problema mientras se borraba un twitt: ${error}`})
+            return res.status(400).json({msg: `Problema mientras se borraba un twitt: ${error}`})
         }
        
 

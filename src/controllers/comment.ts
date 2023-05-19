@@ -9,10 +9,10 @@ const controller = {
     allComments: async (_req: Request, res: Response) => {
         try {
             const comments = await Comment.find()
-            res.status(200).json(comments)
+            return res.status(200).json(comments)
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: `Problema mientras se buscaban los comentarios: ${error}` })
+            return res.status(400).json({ msg: `Problema mientras se buscaban los comentarios: ${error}` })
         }
 
     },
@@ -21,9 +21,9 @@ const controller = {
             const userId = req.params.userId
             const twittId = req.params.twittId
 
-
+            
             if(!isValidObjectId(userId) || !isValidObjectId(twittId)){
-                res.status(400).json({msg: 'Twitt o usuario id invalido'})
+                return res.status(400).json({msg: 'Twitt o usuario id invalido'})
             }
 
             const commentData: CommentT = {
@@ -42,11 +42,11 @@ const controller = {
                 new: true
             })
 
-            res.status(200).json({newComment, pushCommentInTwitt})
+            return res.status(200).json({newComment, pushCommentInTwitt})
 
         } catch (error) {
             console.log(error)
-            res.status(400).json({msg: `Problema mientras se creaba un comentario: ${error}`})
+            return res.status(400).json({msg: `Problema mientras se creaba un comentario: ${error}`})
         }
     },
     deleteComment: async (req: Request, res: Response) => {

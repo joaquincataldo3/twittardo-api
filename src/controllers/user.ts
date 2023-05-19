@@ -37,44 +37,38 @@ const controller = {
     },
     follow: async (req: Request, res: Response) => {
         try {
-            const userBeingFollowedId = req.query.mu;
-            const userWantingToFollowId = req.query.uf;
+            const userBeingFollowedId = req.params.userBFId;
+            const userWantingToFollowId = req.params.userWFId;
 
-            if (!isValidObjectId(userBeingFollowedId) || isValidObjectId(userWantingToFollowId)) {
-                res.status(400).json({ msg: 'Id de usuarios invalidos' })
+            if (!isValidObjectId(userBeingFollowedId) || !isValidObjectId(userWantingToFollowId)) {
+                return res.status(400).json({ msg: 'Id de usuarios invalidos' })
             }
 
             const getUserBeingFollowed = await User.findById(userBeingFollowedId);
             const getUserWantingToFollow = await User.findById(userWantingToFollowId);
 
             if (!getUserBeingFollowed || !getUserWantingToFollow) {
-                res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' })
+                return res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' })
             }
 
 
-            const UserBeingFollowedUpdated = await User.findByIdAndUpdate(userBeingFollowedId,
-                {
-                    $addToSet: {
-                        followers: userWantingToFollowId,
-                    },
-                }, {
-                new: true
-            }).populate('followers', 'following')
-
-            const userFollowingUpdated = await User.findByIdAndUpdate(userWantingToFollowId,
-                {
-                    $addToSet: {
-                        following: userBeingFollowedId,
-                    },
-                }, {
-                new: true
-            }).populate('followers', 'following')
+            const UserBeingFollowedUpdated = await User.findByIdAndUpdate(
+                userBeingFollowedId,
+                { $addToSet: { followers: userWantingToFollowId } },
+                { new: true }
+              );
+              
+              const userFollowingUpdated = await User.findByIdAndUpdate(
+                userWantingToFollowId,
+                { $addToSet: { following: userBeingFollowedId } },
+                { new: true }
+              );
 
 
-            res.status(201).json({ userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated })
+            return res.status(201).json({ userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated })
 
         } catch (error) {
-            res.json({ msg: 'Error mientras se seguía al usuario' })
+            return res.status(400).json({ msg: 'Error mientras se seguía al usuario' })
         }
     },
     login: (async (req: Request, res: Response) => {
@@ -82,18 +76,18 @@ const controller = {
             const { password, email } = req.body
 
             if (!password || !email) {
-                res.status(400).json({ msg: 'Por favor completar los campos solicitados' })
+                return res.status(400).json({ msg: 'Por favor completar los campos solicitados' })
             }
 
             const verifyEmail = await User.findOne({ email })
 
             if (!verifyEmail) {
-                res.status(404).json({ msg: 'Credenciales invalidas' })
+                return res.status(404).json({ msg: 'Credenciales invalidas' })
             } else { // i had to do this else because user could be null
                 const user = verifyEmail
                 const verifyPassword = bcrypt.compare(password, user.password)
                 if (!verifyPassword) {
-                    res.status(404).json({ msg: 'Credenciales invalidas' })
+                    return res.status(404).json({ msg: 'Credenciales invalidas' })
                 }
                 const secretKey = process.env.JWT!
 
@@ -103,11 +97,11 @@ const controller = {
                     httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
                 })
 
-                res.status(200).json({ user, token })
+                return res.status(200).json({ user, token })
             }
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: `Problema mientras se logueaba al usuario: ${error}` })
+            return res.status(400).json({ msg: `Problema mientras se logueaba al usuario: ${error}` })
         }
 
     }),

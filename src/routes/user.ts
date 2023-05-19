@@ -10,10 +10,10 @@ router.get('/logout', userController.logout)
 
 router.post('/register', avatarUpload.single('avatar'), userController.register)
 router.post('/login', userController.login)
-router.post('/follow', userController.follow)
 
-router.put('/:userId/update', userController.follow)
+router.put('/:userId/update', verifyToken, verifyUserOrAdmin, userController.follow)
 router.put('/:userId/toAdmin', verifyToken, userController.convertUserToAdmin)
+router.put('/:userBFId/:userWFId/follow', verifyToken, userController.follow)
 
 router.delete('/:userId', verifyToken, verifyUserOrAdmin, userController.deleteUser)
 

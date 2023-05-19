@@ -1,12 +1,13 @@
 import jwt from 'jsonwebtoken'
 import { Response, NextFunction, Request } from 'express'
 import User from '../database/models/user'
+import {UserT} from '../types'
 
 declare module 'express' { // declaration merging
     interface Request {
-      user?: any;
+        user?: any;
     }
-  }
+}
 
 const verifyToken = (req: Request, res: Response, next: NextFunction) => {
 
@@ -22,8 +23,6 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
             if (err) {
                 res.status(403).json({ msg: 'Token invalido' })
             }
-
-            console.log(user)
             req.user = user
             next()
 
@@ -32,31 +31,30 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
 }
 
 
-
-// TODO - MODIFY MIDDLEWARE TO ASK FOR FIELD IS ADMIN
 const verifyUserOrAdmin = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
-        const compareUser = await User.find({ id: req.user.id })
+        const compareUser = await User.findById(req.user.id)
 
-    console.log(req.user)
+        const user: UserT = req.user._doc
 
-    if (req.user.isAdmin || compareUser) {
-        next()
-    } else {
-        res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
-    }
+        if (user.isAdmin || compareUser) {
+            next()
+        } else {
+            res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
+        }
 
     } catch (error) {
         console.log(error)
-        res.status(400).json({ msg: `Problema mientras se verificaba usuario o admin: ${error}`})
+        res.status(400).json({ msg: `Problema mientras se verificaba usuario o admin: ${error}` })
     }
 
-    
+
 }
 
 const verifyAdmin = (req: Request, res: Response, next: NextFunction) => {
-    if (req.user.isAdmin) {
+    const user: UserT = req.user._doc
+    if (user.isAdmin) {
         next()
     } else {
         res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })

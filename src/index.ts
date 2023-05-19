@@ -1,9 +1,10 @@
 import express from 'express'
-import userRouter from './routes/user'
-import twittRouter from './routes/twitt'
 import mongoose from 'mongoose'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
+import userRouter from './routes/user'
+import twittRouter from './routes/twitt'
+import commentRouter from './routes/comment'
 
 dotenv.config()
 
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/users', userRouter)
 app.use('/twitts', twittRouter)
+app.use('/comments', commentRouter)
 
 mongoose.set('strictQuery', false)
 if (MONGO_URI) {
