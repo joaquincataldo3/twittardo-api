@@ -1,5 +1,4 @@
 import mongoose from "mongoose"
-import schemas from "../../utils/schemaNames"
 import { Schema, Types} from "mongoose"
 
 const twittSchema: Schema = new Schema ({
@@ -9,20 +8,20 @@ const twittSchema: Schema = new Schema ({
     },
     image: {
         type: Types.ObjectId,
-        ref: schemas.users
+        ref: 'User'
     },
     user: {
         type: Types.ObjectId,
-        ref: schemas.users, 
+        ref: 'User', 
         required: true
     },
     comments: [{
         type: Types.ObjectId,
-        ref: schemas.comments
+        ref: 'Comment'
     }]
 
 })
 
-const model = mongoose.model(schemas.twitts, twittSchema)
+const model = mongoose.model('Twitt', twittSchema)
 
 export default model

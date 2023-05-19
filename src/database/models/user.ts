@@ -1,5 +1,4 @@
 import mongoose from "mongoose"
-import schemas from "../../utils/schemaNames"
 import { Schema, Types } from "mongoose"
 
   const userSchema: Schema = new Schema ({
@@ -18,17 +17,20 @@ import { Schema, Types } from "mongoose"
     avatar: {
       type: String,
     },
+    isAdmin: {
+      type: Boolean
+    },
     twitts: [{
       type: Types.ObjectId,
-      ref: schemas.twitts
+      ref: 'Twitt'
     }],
     followers: [{
       type: Types.ObjectId,
-      ref: schemas.users
+      ref: 'User'
     }],
     following: [{
       type: Types.ObjectId,
-      ref: schemas.users
+      ref: 'User'
     }],
     createdAt: {
       type: Date,
@@ -37,6 +39,6 @@ import { Schema, Types } from "mongoose"
     }
   });
 
-const model = mongoose.model(schemas.users, userSchema)
+const model = mongoose.model('User', userSchema)
 
 export default model

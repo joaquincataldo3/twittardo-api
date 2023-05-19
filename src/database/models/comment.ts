@@ -1,5 +1,4 @@
 import mongoose from "mongoose"
-import schemas from "../../utils/schemaNames"
 import { Schema, Types} from "mongoose"
 
 const commentSchema: Schema =new Schema  ({
@@ -9,11 +8,11 @@ const commentSchema: Schema =new Schema  ({
     },
     user: {
         type: Types.ObjectId,
-        ref: schemas.users, 
+        ref: 'User', 
         required: true
     }
 })
 
-const model = mongoose.model(schemas.comments, commentSchema)
+const model = mongoose.model('Comment', commentSchema)
 
 export default model

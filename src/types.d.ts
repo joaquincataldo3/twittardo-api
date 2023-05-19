@@ -19,8 +19,8 @@ export type CommentT = {
 }
 
 export type SchemaNameT = {
-    users: string,
-    admins: string
-    twitts: string, 
-    comments: string
+    User: string,
+    Admin: string,
+    Twitt: string, 
+    Comment: string
 }

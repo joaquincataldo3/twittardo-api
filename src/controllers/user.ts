@@ -97,7 +97,7 @@ const controller = {
                 }
                 const secretKey = process.env.JWT!
 
-                const token = jwt.sign({...user}, secretKey)
+                const token = jwt.sign({ ...user }, secretKey)
 
                 res.cookie('user_access_token', token, {
                     httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
@@ -113,18 +113,28 @@ const controller = {
     }),
     register: (async (req: Request, res: Response) => {
         try {
-            const { email, username, password } = req.body
-
-            const emailAlreadyInDb = await User.find({ email })
-            const usernameAlreadyInDb = await User.find({ username })
-
-            if (emailAlreadyInDb || usernameAlreadyInDb) {
-                res.status(409).json({ msg: 'Nombre de usuario o email están en uso' })
-            }
+            const password = req.body.password
+            const username = req.body.username
+            const email = req.body.email
+            const avatar = req.file
 
             if (!email || !username || !password) {
-                res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
+                return res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
             }
+
+            const emailAlreadyInDb = await User.find({email})
+
+            if (emailAlreadyInDb.length > 0) {
+                return res.status(409).json({ msg: 'Email ya en uso' })
+            }
+
+
+            const usernameAlreadyInDb = await User.find({ username})
+
+            if (usernameAlreadyInDb.length > 0) {
+                return res.status(409).json({ msg: 'Nombre de usuario ya en uso' })
+            }
+
 
             const hashPassword = bcrypt.hashSync(password, 10)
 
@@ -135,16 +145,16 @@ const controller = {
                 isAdmin: false
             }
 
-            if (req.file) {
-                newUserData.avatar = req.file.filename
+            if (avatar) {
+                newUserData.avatar = avatar.filename
             }
 
-            const newUser = await User.create({ email, username, password: hashPassword })
+            const newUser = await User.create(newUserData)
 
-            res.status(201).json(newUser);
+            return res.status(201).json(newUser);
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
+            return res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
         }
 
     }),
