@@ -6,7 +6,7 @@ const router = express.Router()
 
 
 router.get('/all', twittController.allTwitts)
-router.get('/:twittId',  twittController.allTwitts)
+router.get('/:twittId',  twittController.oneTwitt)
 
 router.post('/:userId/create', verifyToken, twittController.createTwitt)
 
