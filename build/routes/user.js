@@ -5,6 +5,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const user_1 = __importDefault(require("../controllers/user"));
+const avatarUpload_1 = __importDefault(require("../middlewares/avatarUpload"));
+const auth_1 = require("../middlewares/auth");
 const router = express_1.default.Router();
-router.get('/', user_1.default.allUsers);
+router.get('/all', auth_1.verifyToken, auth_1.verifyAdmin, user_1.default.allUsers);
+router.get('/:userId', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.oneUser);
+router.get('/logout', user_1.default.logout);
+router.post('/register', avatarUpload_1.default.single('avatar'), user_1.default.register);
+router.post('/login', user_1.default.login);
+router.put('/:userId/update', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.follow);
+router.put('/:userId/toAdmin', auth_1.verifyToken, user_1.default.convertUserToAdmin);
+router.put('/:userBFId/:userWFId/follow', auth_1.verifyToken, user_1.default.follow);
+router.delete('/:userId', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.deleteUser);
 exports.default = router;
