@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser'
 import userRouter from './routes/user'
 import twittRouter from './routes/twitt'
 import commentRouter from './routes/comment'
+import { PORT } from './types'
 
 dotenv.config()
 
@@ -24,7 +25,7 @@ if (MONGO_URI) {
     mongoose.connect(MONGO_URI)
         .then(() => {
             console.log('Mongo DB Connected');
-            const PORT = 3000;
+            const PORT: PORT = process.env.PORT || 3000;
             app.listen(PORT, () => {
                 console.log(`Server opened on ${PORT}`);
             })

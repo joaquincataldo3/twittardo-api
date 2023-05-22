@@ -24,3 +24,5 @@ export type SchemaNameT = {
     Twitt: string, 
     Comment: string
 }
+
+export type PORT = string | number
