@@ -6,12 +6,15 @@ import userRouter from './routes/user'
 import twittRouter from './routes/twitt'
 import commentRouter from './routes/comment'
 import { PORT } from './types'
+import cors from 'cors'
+
 
 dotenv.config()
 
 const app = express()
 const MONGO_URI = process.env.MONGO_URI
 
+app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
