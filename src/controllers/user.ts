@@ -5,6 +5,9 @@ import { UserT } from '../types'
 import { isValidObjectId } from 'mongoose'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
+dotenv.config()
+
 
 const controller = {
     allUsers: async (_req: Request, res: Response) => {
@@ -74,6 +77,7 @@ const controller = {
     login: (async (req: Request, res: Response) => {
         try {
             const { password, email } = req.body
+            const secretKey = process.env.JWT_KEY!
 
             if (!password || !email) {
                 return res.status(400).json({ msg: 'Por favor completar los campos solicitados' })
@@ -83,16 +87,13 @@ const controller = {
 
             if (!verifyEmail) {
                 return res.status(404).json({ msg: 'Credenciales invalidas' })
-            } else { // i had to do this else because user could be null
+            } else { // user could be null
                 const user = verifyEmail
                 const verifyPassword = bcrypt.compare(password, user.password)
                 if (!verifyPassword) {
                     return res.status(404).json({ msg: 'Credenciales invalidas' })
                 }
-                const secretKey = process.env.JWT!
-
-                const token = jwt.sign({ ...user }, secretKey)
-
+                const token = jwt.sign({ ...user} , secretKey)
                 res.cookie('user_access_token', token, {
                     httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
                 })
