@@ -141,7 +141,7 @@ const controller = {
             }
 
             if (avatar) {
-                newUserData.avatar = avatar.filename
+                newUserData.avatar = avatar.path
             }
 
             const newUser = await User.create(newUserData)

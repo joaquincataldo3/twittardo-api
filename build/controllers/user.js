@@ -121,7 +121,7 @@ const controller = {
                 isAdmin: false
             };
             if (avatar) {
-                newUserData.avatar = avatar.filename;
+                newUserData.avatar = avatar.path;
             }
             const newUser = yield user_1.default.create(newUserData);
             return res.status(201).json(newUser);
