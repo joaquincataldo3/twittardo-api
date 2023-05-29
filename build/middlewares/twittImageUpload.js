@@ -9,7 +9,7 @@ const storage = multer_1.default.diskStorage({
         cb(null, 'images/twitsImages');
     },
     filename: (_req, file, cb) => {
-        cb(null, file.originalname);
+        cb(null, Date.now() + file.originalname);
     }
 });
 const uploadFile = (0, multer_1.default)({ storage: storage });

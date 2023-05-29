@@ -9,7 +9,7 @@ const storage = multer_1.default.diskStorage({
         cb(null, 'src/images/avatars');
     },
     filename: (_req, file, cb) => {
-        cb(null, Date.now() + ' ' + file.originalname);
+        cb(null, Date.now() + file.originalname);
     }
 });
 const uploadFile = (0, multer_1.default)({ storage: storage });
