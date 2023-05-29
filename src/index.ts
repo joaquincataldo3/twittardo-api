@@ -7,11 +7,13 @@ import twittRouter from './routes/twitt'
 import commentRouter from './routes/comment'
 import { PORT } from './types'
 import cors from 'cors'
+import path from 'path'
 dotenv.config()
 
 const app = express()
 const MONGO_URI = process.env.MONGO_URI
 
+app.use('/uploads', express.static(path.join(__dirname, 'src/images')));
 app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
