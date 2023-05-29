@@ -15,7 +15,7 @@ const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const MONGO_URI = process.env.MONGO_URI;
-app.use('/avatars', express_1.default.static(path_1.default.join(__dirname, './src/images')));
+app.use('/avatars', express_1.default.static(path_1.default.join(__dirname, '../')));
 app.use((0, cors_1.default)());
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());

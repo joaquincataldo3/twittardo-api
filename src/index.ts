@@ -13,7 +13,7 @@ dotenv.config()
 const app = express()
 const MONGO_URI = process.env.MONGO_URI
 
-app.use('/avatars', express.static(path.join(__dirname, './src/images')));
+app.use('/avatars', express.static(path.join(__dirname, '../')));
 app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
