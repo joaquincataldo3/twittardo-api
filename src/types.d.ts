@@ -1,4 +1,7 @@
-export type UserT = {
+
+
+export interface UserT  {
+    _id?: string,
     email: string,
     username: string,
     password: string,
@@ -6,19 +9,19 @@ export type UserT = {
     avatar?: string
 }
 
-export type TwittT = {
+export interface TwittT  {
     twitt: string,
     image?: string,
     user: string,
     comments?: string[]
 }
 
-export type CommentT = {
+export interface CommentT  {
     comment: string,
     user: string
 }
 
-export type SchemaNameT = {
+export interface SchemaNameT  {
     User: string,
     Admin: string,
     Twitt: string, 

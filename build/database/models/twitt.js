@@ -11,8 +11,7 @@ const twittSchema = new mongoose_2.Schema({
         required: true
     },
     image: {
-        type: mongoose_2.Types.ObjectId,
-        ref: 'User'
+        type: String,
     },
     user: {
         type: mongoose_2.Types.ObjectId,

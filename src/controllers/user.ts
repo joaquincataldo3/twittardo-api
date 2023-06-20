@@ -242,7 +242,7 @@ const controller = {
     },
     logout: (_req: Request, res: Response) => {
         res.cookie('user_access_token', '', { maxAge: 1 })
-        res.status(200).json({ msg: "Fuiste deslogueado" })
+        return res.status(200).json({ msg: "Fuiste deslogueado" })
     }
 }
 

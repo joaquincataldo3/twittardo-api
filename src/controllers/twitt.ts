@@ -4,6 +4,7 @@ import { isValidObjectId } from 'mongoose'
 import { TwittT } from '../types'
 
 
+
 const controller = {
     allTwitts: async (_req: Request, res: Response) => {
         try {
@@ -15,7 +16,7 @@ const controller = {
         }
 
     },
-     oneTwitt: async (req: Request, res: Response) => {
+    oneTwitt: async (req: Request, res: Response) => {
         try {
             const twittId = req.params.twittId
             const twitt = await Twitt.findById(twittId)
@@ -45,7 +46,7 @@ const controller = {
 
         } catch (error) {
             console.log(error)
-            return res.status(400).json({msg: `Problema mientras se creaba un twitt: ${error}`})
+            return res.status(400).json({ msg: `Problema mientras se creaba un twitt: ${error}` })
         }
     },
     deleteTwitt: async (req: Request, res: Response) => {
@@ -53,8 +54,8 @@ const controller = {
         try {
             const twittIdToDelete = req.params.twittIdToDelete
 
-            if(!isValidObjectId(twittIdToDelete)){
-                return res.status(400).json({msg: 'Twitt id invalido'})
+            if (!isValidObjectId(twittIdToDelete)) {
+                return res.status(400).json({ msg: 'Twitt id invalido' })
             }
 
             await Twitt.findByIdAndRemove(twittIdToDelete)
@@ -63,9 +64,9 @@ const controller = {
 
         } catch (error) {
             console.log(error)
-            return res.status(400).json({msg: `Problema mientras se borraba un twitt: ${error}`})
+            return res.status(400).json({ msg: `Problema mientras se borraba un twitt: ${error}` })
         }
-       
+
 
 
     }

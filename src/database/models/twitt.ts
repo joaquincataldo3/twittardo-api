@@ -7,8 +7,7 @@ const twittSchema: Schema = new Schema ({
         required: true
     },
     image: {
-        type: Types.ObjectId,
-        ref: 'User'
+        type: String,
     },
     user: {
         type: Types.ObjectId,
