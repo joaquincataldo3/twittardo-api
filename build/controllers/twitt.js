@@ -17,7 +17,9 @@ const mongoose_1 = require("mongoose");
 const controller = {
     allTwitts: (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const twitts = yield twitt_1.default.find();
+            const twitts = yield twitt_1.default
+                .find()
+                .populate('user');
             return res.status(200).json(twitts);
         }
         catch (error) {

@@ -8,7 +8,9 @@ import { TwittT } from '../types'
 const controller = {
     allTwitts: async (_req: Request, res: Response) => {
         try {
-            const twitts = await Twitt.find()
+            const twitts = await Twitt
+            .find()
+            .populate('user')
             return res.status(200).json(twitts)
         } catch (error) {
             console.log(error)
