@@ -37,7 +37,7 @@ const controller = {
             }
 
             if (req.file) {
-                twittData.image = req.file.filename
+                twittData.image = req.file.path
             }
 
             const newTwitt = await Twitt.create(twittData)

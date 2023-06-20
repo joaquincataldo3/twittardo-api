@@ -44,7 +44,7 @@ const controller = {
                 user: userId
             };
             if (req.file) {
-                twittData.image = req.file.filename;
+                twittData.image = req.file.path;
             }
             const newTwitt = yield twitt_1.default.create(twittData);
             return res.status(200).json(newTwitt);
