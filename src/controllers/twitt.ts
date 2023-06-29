@@ -14,7 +14,7 @@ const controller = {
             const twitts = await Twitt
                 .find()
                 .skip(pagesNumber * twittPerPage) // pages could be 0, 1, 2 etc. times the movie per page
-                .limit(twittPerPage) // limiting it to 3 movies per page   
+                .limit(twittPerPage) // limiting it to 5 movies per page   
                 .populate('user')
             return res.status(200).json(twitts)
         } catch (error) {
