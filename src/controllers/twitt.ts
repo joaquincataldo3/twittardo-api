@@ -6,11 +6,16 @@ import { TwittT } from '../types'
 
 
 const controller = {
-    allTwitts: async (_req: Request, res: Response) => {
+    allTwitts: async (req: Request, res: Response) => {
         try {
+            const pages = req.query.p;
+            const pagesNumber = Number(pages)
+            const twittPerPage = 5;
             const twitts = await Twitt
-            .find()
-            .populate('user')
+                .find()
+                .skip(pagesNumber * twittPerPage) // pages could be 0, 1, 2 etc. times the movie per page
+                .limit(twittPerPage) // limiting it to 3 movies per page   
+                .populate('user')
             return res.status(200).json(twitts)
         } catch (error) {
             console.log(error)
