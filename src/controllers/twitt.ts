@@ -26,7 +26,9 @@ const controller = {
     oneTwitt: async (req: Request, res: Response) => {
         try {
             const twittId = req.params.twittId
-            const twitt = await Twitt.findById(twittId)
+            const twitt = await Twitt
+            .findById(twittId)
+            .populate('user')
             return res.status(200).json(twitt)
         } catch (error) {
             console.log(error)

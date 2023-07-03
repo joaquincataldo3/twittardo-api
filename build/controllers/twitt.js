@@ -35,7 +35,9 @@ const controller = {
     oneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const twittId = req.params.twittId;
-            const twitt = yield twitt_1.default.findById(twittId);
+            const twitt = yield twitt_1.default
+                .findById(twittId)
+                .populate('user');
             return res.status(200).json(twitt);
         }
         catch (error) {
