@@ -29,7 +29,7 @@ const controller = {
             const userToFind = await User
             .findById(id)
             .populate('twitts')
-            return res.send(userToFind)
+            
             if (!userToFind) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' })
             } 
