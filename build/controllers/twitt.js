@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const twitt_1 = __importDefault(require("../database/models/twitt"));
+const user_1 = __importDefault(require("../database/models/user"));
 const mongoose_1 = require("mongoose");
 const controller = {
     allTwitts: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -48,6 +49,9 @@ const controller = {
     createTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const userId = req.params.userId;
+            if (!(0, mongoose_1.isValidObjectId)(userId)) {
+                return res.status(400).json({ msg: 'Id de usuario invalido' });
+            }
             const twittData = {
                 twitt: req.body.twitt,
                 user: userId
@@ -56,6 +60,13 @@ const controller = {
                 twittData.image = req.file.path;
             }
             const newTwitt = yield twitt_1.default.create(twittData);
+            yield user_1.default.findByIdAndUpdate(userId, {
+                $addToSet: {
+                    twitts: newTwitt._id
+                },
+            }, {
+                new: true
+            });
             return res.status(200).json(newTwitt);
         }
         catch (error) {

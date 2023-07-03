@@ -22,29 +22,32 @@ const controller = {
     allUsers: (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const users = yield user_1.default.find();
-            res.status(200).json(users);
+            return res.status(200).json(users);
         }
         catch (error) {
             console.log(error);
-            res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` });
+            return res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` });
         }
     }),
     oneUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const id = req.params.userId;
             if (!(0, mongoose_1.isValidObjectId)(id)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' });
+                return res.status(400).json({ msg: 'Id de usuario invalido' });
             }
-            const userToFind = yield user_1.default.findById(id);
-            if (!userToFind) {
-                res.status(404).json({ msg: 'Usuario no encontrado' });
-            }
+            const userToFind = yield user_1.default
+                .findById(id)
+                .populate('twitts');
+            return res.send(userToFind);
+            /*  if (!userToFind) {
+                 return res.status(404).json({ msg: 'Usuario no encontrado' })
+             } */
             const user = userToFind;
-            res.status(200).json(user);
+            return res.status(200).json(user);
         }
         catch (error) {
             console.log(error);
-            res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` });
+            return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` });
         }
     }),
     follow: (req, res) => __awaiter(void 0, void 0, void 0, function* () {

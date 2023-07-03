@@ -13,10 +13,10 @@ const controller = {
     allUsers: async (_req: Request, res: Response) => {
         try {
             const users = await User.find()
-            res.status(200).json(users)
+            return res.status(200).json(users)
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` })
+            return res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` })
         }
 
     },
@@ -24,17 +24,20 @@ const controller = {
         try {
             const id = req.params.userId
             if (!isValidObjectId(id)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' })
+                return res.status(400).json({ msg: 'Id de usuario invalido' })
             }
-            const userToFind = await User.findById(id)
-            if (!userToFind) {
-                res.status(404).json({ msg: 'Usuario no encontrado' })
-            }
+            const userToFind = await User
+            .findById(id)
+            .populate('twitts')
+            return res.send(userToFind)
+           /*  if (!userToFind) {
+                return res.status(404).json({ msg: 'Usuario no encontrado' })
+            } */
             const user = userToFind
-            res.status(200).json(user)
+            return res.status(200).json(user)
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
+            return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
         }
 
     },

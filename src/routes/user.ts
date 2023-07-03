@@ -4,10 +4,11 @@ import avatarUpload from '../middlewares/avatarUpload'
 import { verifyAdmin, verifyToken, verifyUserOrAdmin } from '../middlewares/auth'
 
 const router = express.Router()
-router.get('/all', verifyToken, verifyAdmin, userController.allUsers)
+router.get('/', verifyToken, verifyAdmin, userController.allUsers)
 router.post('/register', avatarUpload.single('avatar'), userController.register)
 router.post('/login', userController.login)
 router.get('/logout', verifyToken, verifyUserOrAdmin, userController.logout)
+router.get('/:userId', verifyToken, verifyUserOrAdmin, userController.oneUser)
 
 
 router.put('/:userId/update', verifyToken, verifyUserOrAdmin, userController.follow)

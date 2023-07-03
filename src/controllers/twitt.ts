@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import Twitt from '../database/models/twitt'
+import User from '../database/models/user'
 import { isValidObjectId } from 'mongoose'
 import { TwittT } from '../types'
 
@@ -40,6 +41,10 @@ const controller = {
         try {
             const userId = req.params.userId
 
+            if(!isValidObjectId(userId)){
+                return res.status(400).json({ msg: 'Id de usuario invalido' })
+            }
+
             const twittData: TwittT = {
                 twitt: req.body.twitt,
                 user: userId
@@ -50,6 +55,14 @@ const controller = {
             }
 
             const newTwitt = await Twitt.create(twittData)
+            await User.findByIdAndUpdate(userId, 
+                {
+                $addToSet: { 
+                    twitts: newTwitt._id
+                },
+            }, {
+                new: true
+            })
 
             return res.status(200).json(newTwitt)
 
