@@ -39,9 +39,9 @@ const controller = {
                 .findById(id)
                 .populate('twitts');
             return res.send(userToFind);
-            /*  if (!userToFind) {
-                 return res.status(404).json({ msg: 'Usuario no encontrado' })
-             } */
+            if (!userToFind) {
+                return res.status(404).json({ msg: 'Usuario no encontrado' });
+            }
             const user = userToFind;
             return res.status(200).json(user);
         }
