@@ -140,7 +140,7 @@ const controller = {
                 email,
                 username,
                 password: hashPassword,
-                isAdmin: false
+                isAdmin: 0
             }
 
             if (avatar) {
@@ -175,7 +175,7 @@ const controller = {
                     username: req.body.username ? req.body.username : user.username,
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
-                    isAdmin: false
+                    isAdmin: 0
                 }
 
                 if (req.file) {
@@ -205,7 +205,7 @@ const controller = {
             }
 
             if (key === adminKey) {
-                const userToFind = await User.findByIdAndUpdate(userId, { isAdmin: true }, { new: true })
+                const userToFind = await User.findByIdAndUpdate(userId, { isAdmin: 1 }, { new: true })
 
                 if (!userToFind) {
                     res.status(404).json({ msg: 'Usuario no encontrado' })

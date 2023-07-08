@@ -18,7 +18,7 @@ import { Schema, Types } from "mongoose"
       type: String,
     },
     isAdmin: {
-      type: Boolean
+      type: Number
     },
     twitts: [{
       type: Types.ObjectId,

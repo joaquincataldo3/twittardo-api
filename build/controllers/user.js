@@ -119,7 +119,7 @@ const controller = {
                 email,
                 username,
                 password: hashPassword,
-                isAdmin: false
+                isAdmin: 0
             };
             if (avatar) {
                 newUserData.avatar = avatar.path;
@@ -148,7 +148,7 @@ const controller = {
                     username: req.body.username ? req.body.username : user.username,
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
-                    isAdmin: false
+                    isAdmin: 0
                 };
                 if (req.file) {
                     dataToUpdate.avatar = req.file.filename;
@@ -171,7 +171,7 @@ const controller = {
                 res.status(400).json({ msg: 'Id de usuario invalido' });
             }
             if (key === adminKey) {
-                const userToFind = yield user_1.default.findByIdAndUpdate(userId, { isAdmin: true }, { new: true });
+                const userToFind = yield user_1.default.findByIdAndUpdate(userId, { isAdmin: 1 }, { new: true });
                 if (!userToFind) {
                     res.status(404).json({ msg: 'Usuario no encontrado' });
                 }

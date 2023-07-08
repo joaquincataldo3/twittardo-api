@@ -22,7 +22,7 @@ const userSchema = new mongoose_2.Schema({
         type: String,
     },
     isAdmin: {
-        type: Boolean
+        type: Number
     },
     twitts: [{
             type: mongoose_2.Types.ObjectId,
