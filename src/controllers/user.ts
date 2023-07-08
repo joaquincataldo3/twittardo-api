@@ -12,7 +12,9 @@ dotenv.config()
 const controller = {
     allUsers: async (_req: Request, res: Response) => {
         try {
-            const users = await User.find()
+            const users = await User
+            .find()
+            .select('-_id -password -email')
             return res.status(200).json(users)
         } catch (error) {
             console.log(error)

@@ -21,7 +21,9 @@ dotenv_1.default.config();
 const controller = {
     allUsers: (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const users = yield user_1.default.find();
+            const users = yield user_1.default
+                .find()
+                .select('-_id -password -email');
             return res.status(200).json(users);
         }
         catch (error) {
