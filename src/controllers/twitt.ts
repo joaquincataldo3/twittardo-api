@@ -16,8 +16,8 @@ const controller = {
                 .find()
                 .skip(pagesNumber * twittPerPage) // pages could be 0, 1, 2 etc. times the movie per page
                 .limit(twittPerPage) // limiting it to 5 movies per page   
-                .select('_id password email')
-                .populate('user', '_id password email')
+                .select('-_id -password -email')
+                .populate('user', '-_id -password -email')
             return res.status(200).json(twitts)
         } catch (error) {
             console.log(error)
