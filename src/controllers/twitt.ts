@@ -16,7 +16,8 @@ const controller = {
                 .find()
                 .skip(pagesNumber * twittPerPage) // pages could be 0, 1, 2 etc. times the movie per page
                 .limit(twittPerPage) // limiting it to 5 movies per page   
-                .populate('user')
+                .select('_id password email')
+                .populate('user', '_id password email')
             return res.status(200).json(twitts)
         } catch (error) {
             console.log(error)
@@ -28,8 +29,9 @@ const controller = {
         try {
             const twittId = req.params.twittId
             const twitt = await Twitt
-            .findById(twittId)
-            .populate('user')
+                .findById(twittId)
+                .select('_id password email')
+                .populate('user', '_id password email')
             return res.status(200).json(twitt)
         } catch (error) {
             console.log(error)
@@ -41,7 +43,7 @@ const controller = {
         try {
             const userId = req.params.userId
 
-            if(!isValidObjectId(userId)){
+            if (!isValidObjectId(userId)) {
                 return res.status(400).json({ msg: 'Id de usuario invalido' })
             }
 
@@ -55,12 +57,12 @@ const controller = {
             }
 
             const newTwitt = await Twitt.create(twittData)
-            await User.findByIdAndUpdate(userId, 
+            await User.findByIdAndUpdate(userId,
                 {
-                $addToSet: { 
-                    twitts: newTwitt._id
-                },
-            }, {
+                    $addToSet: {
+                        twitts: newTwitt._id
+                    },
+                }, {
                 new: true
             })
 

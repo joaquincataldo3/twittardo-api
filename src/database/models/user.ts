@@ -8,11 +8,11 @@ import { Schema, Types } from "mongoose"
     },
     email: {
       type: String,
-      required: true
+      required: true,
     },
     password: {
       type: String,
-      required: true
+      required: true,
     },
     avatar: {
       type: String,

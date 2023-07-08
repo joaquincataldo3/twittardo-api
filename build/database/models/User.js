@@ -12,11 +12,11 @@ const userSchema = new mongoose_2.Schema({
     },
     email: {
         type: String,
-        required: true
+        required: true,
     },
     password: {
         type: String,
-        required: true
+        required: true,
     },
     avatar: {
         type: String,
