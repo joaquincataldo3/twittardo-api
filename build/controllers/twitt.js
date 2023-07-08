@@ -26,7 +26,7 @@ const controller = {
                 .skip(pagesNumber * twittPerPage) // pages could be 0, 1, 2 etc. times the movie per page
                 .limit(twittPerPage) // limiting it to 5 movies per page   
                 .select('-password -email')
-                .populate('user', '-_id -password -email');
+                .populate('user', '-password -email');
             return res.status(200).json(twitts);
         }
         catch (error) {
@@ -39,8 +39,8 @@ const controller = {
             const twittId = req.params.twittId;
             const twitt = yield twitt_1.default
                 .findById(twittId)
-                .select('_id password email')
-                .populate('user', '_id password email');
+                .select('-password -email')
+                .populate('user', '-password -email');
             return res.status(200).json(twitt);
         }
         catch (error) {
