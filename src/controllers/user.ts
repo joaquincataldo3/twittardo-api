@@ -36,7 +36,7 @@ const controller = {
             const user = userToFind
             return res.status(200).json(user)
         } catch (error) {
-            console.log(error)
+            
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
         }
 

@@ -38,7 +38,6 @@ const controller = {
             const userToFind = yield user_1.default
                 .findById(id)
                 .populate('twitts');
-            return res.send(userToFind);
             if (!userToFind) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
@@ -46,7 +45,6 @@ const controller = {
             return res.status(200).json(user);
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` });
         }
     }),

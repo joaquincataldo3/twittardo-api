@@ -12,11 +12,17 @@ const twitt_1 = __importDefault(require("./routes/twitt"));
 const comment_1 = __importDefault(require("./routes/comment"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
+const express_session_1 = __importDefault(require("express-session"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const MONGO_URI = process.env.MONGO_URI;
 app.use('/images', express_1.default.static(path_1.default.join(__dirname, '../')));
 /* app.use('/avatars', express.static(path.join(__dirname, '../'))); */
+app.use((0, express_session_1.default)({
+    secret: "Global session",
+    resave: false,
+    saveUninitialized: false
+}));
 app.use((0, cors_1.default)());
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());

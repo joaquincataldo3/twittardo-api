@@ -8,6 +8,7 @@ import commentRouter from './routes/comment'
 import { PORT } from './types'
 import cors from 'cors'
 import path from 'path'
+import session from 'express-session'
 dotenv.config()
 
 const app = express()
@@ -16,6 +17,11 @@ const MONGO_URI = process.env.MONGO_URI
 app.use('/images', express.static(path.join(__dirname, '../')));
 /* app.use('/avatars', express.static(path.join(__dirname, '../'))); */
 
+app.use(session({ 
+    secret: "Global session",
+    resave: false,
+    saveUninitialized: false
+}));
 app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
