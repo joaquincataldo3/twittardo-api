@@ -21,7 +21,8 @@ const twittSchema = new mongoose_2.Schema({
     comments: [{
             type: mongoose_2.Types.ObjectId,
             ref: 'Comment'
-        }]
+        }],
+    favourites: { type: Number }
 });
 const model = mongoose_1.default.model('Twitt', twittSchema);
 exports.default = model;

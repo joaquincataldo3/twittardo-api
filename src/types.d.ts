@@ -14,6 +14,7 @@ export interface TwittT  {
     image?: string,
     user: string,
     comments?: string[]
+    favourites?: number
 }
 
 export interface CommentT  {
