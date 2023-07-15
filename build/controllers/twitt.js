@@ -48,6 +48,25 @@ const controller = {
             return res.status(400).json({ msg: `Problema mientras se buscaba un twitt en particular: ${error}` });
         }
     }),
+    favOneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const twittId = req.params.twittId;
+            const userId = req.params.userId;
+            yield twitt_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: 1 } }, { new: true });
+            yield user_1.default.findByIdAndUpdate(userId, {
+                $addToSet: {
+                    favourites: twittId
+                },
+            }, {
+                new: true
+            });
+            return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
+        }
+    }),
     createTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const userId = req.params.userId;

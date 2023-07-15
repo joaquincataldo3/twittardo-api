@@ -39,6 +39,31 @@ const controller = {
         }
 
     },
+    favOneTwitt: async (req: Request, res: Response) => {
+        try {
+            const twittId = req.params.twittId
+            const userId = req.params.userId
+
+            await Twitt.findByIdAndUpdate(twittId, 
+                { $inc: { favourites: 1 } },
+                { new: true });
+            
+           await User.findByIdAndUpdate(userId, 
+                {
+                $addToSet: { 
+                    favourites: twittId
+                },
+            }, {
+                new: true
+            })
+
+            return res.status(201).json({msg: 'Twitt faveado satisfactoriamente'})
+
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` })
+        }
+    },
     createTwitt: async (req: Request, res: Response) => {
         try {
             const userId = req.params.userId

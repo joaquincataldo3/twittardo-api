@@ -8,6 +8,7 @@ const router = express.Router()
 
 
 router.get('/all', twittController.allTwitts)
+router.get('/favourite',  twittController.favOneTwitt)
 router.get('/:twittId',  twittController.oneTwitt)
 
 router.post('/:userId/create', verifyToken, verifyUserOrAdmin, twittImageUpload.single('image'), twittController.createTwitt)

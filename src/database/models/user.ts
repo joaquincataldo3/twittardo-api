@@ -20,6 +20,10 @@ import { Schema, Types } from "mongoose"
     isAdmin: {
       type: Number
     },
+    favourites: {
+      type: Types.ObjectId,
+      ref: 'Twitt'
+    },
     twitts: [{
       type: Types.ObjectId,
       ref: 'Twitt'

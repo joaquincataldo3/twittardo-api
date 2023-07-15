@@ -24,6 +24,10 @@ const userSchema = new mongoose_2.Schema({
     isAdmin: {
         type: Number
     },
+    favourites: {
+        type: mongoose_2.Types.ObjectId,
+        ref: 'Twitt'
+    },
     twitts: [{
             type: mongoose_2.Types.ObjectId,
             ref: 'Twitt'
