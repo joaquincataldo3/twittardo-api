@@ -18,6 +18,9 @@ const twittSchema: Schema = new Schema ({
         type: Types.ObjectId,
         ref: 'Comment'
     }],
+    commentsNumber: {
+        type: Number
+    },
     favourites: {type: Number}
 
 })

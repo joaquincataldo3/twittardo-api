@@ -42,6 +42,9 @@ const controller = {
                 $addToSet: {
                     comments: newComment._id
                 },
+                $inc: {
+                    commentsNumber: 1
+                }
             }, {
                 new: true
             });

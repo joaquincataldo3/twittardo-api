@@ -76,6 +76,7 @@ const controller = {
             const twittData = {
                 twitt: req.body.twitt,
                 favourites: 0,
+                commentsNumber: 0,
                 user: userId
             };
             if (req.file) {
