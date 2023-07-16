@@ -74,6 +74,7 @@ const controller = {
 
             const twittData: TwittT = {
                 twitt: req.body.twitt,
+                favourites: 0,
                 user: userId
             }
 
