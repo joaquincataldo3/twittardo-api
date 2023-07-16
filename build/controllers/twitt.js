@@ -23,6 +23,7 @@ const controller = {
             const twittPerPage = 5;
             const twitts = yield twitt_1.default
                 .find()
+                .sort({ createdAt: -1 })
                 .skip(pagesNumber * twittPerPage) // pages could be 0, 1, 2 etc. times the movie per page
                 .limit(twittPerPage) // limiting it to 5 movies per page   
                 .select('-password -email')

@@ -21,8 +21,12 @@ const twittSchema: Schema = new Schema ({
     commentsNumber: {
         type: Number
     },
-    favourites: {type: Number}
-
+    favourites: {type: Number},
+    createdAt: {
+        type: Date,
+        default: () => Date.now(),
+        immutable: true
+      }
 })
 
 const model = mongoose.model('Twitt', twittSchema)

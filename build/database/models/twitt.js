@@ -25,7 +25,12 @@ const twittSchema = new mongoose_2.Schema({
     commentsNumber: {
         type: Number
     },
-    favourites: { type: Number }
+    favourites: { type: Number },
+    createdAt: {
+        type: Date,
+        default: () => Date.now(),
+        immutable: true
+    }
 });
 const model = mongoose_1.default.model('Twitt', twittSchema);
 exports.default = model;
