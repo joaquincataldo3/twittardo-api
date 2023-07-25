@@ -19,6 +19,7 @@ const controller = {
                 .limit(twittPerPage) // limiting it to 5 movies per page   
                 .select('-password -email')
                 .populate('user', '-password -email')
+                .populate('comments')
             return res.status(200).json(twitts)
         } catch (error) {
             console.log(error)
