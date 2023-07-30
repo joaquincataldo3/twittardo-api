@@ -31,12 +31,13 @@ const controller = {
     oneTwitt: async (req: Request, res: Response) => {
         try {
             const twittId = req.params.twittId
-            const twitt = await Twitt
+            const twittResponse = await Twitt
                 .findById(twittId)
                 .select('-password -email')
                 .populate('user', '-password -email')
                 .populate('comments')
-                .populate('comments.user')
+            // two awaits bc we are populating comments and then user inside comments
+            const twitt = await twittResponse?.populate('comments.user')
             return res.status(200).json(twitt)
         } catch (error) {
             console.log(error)

@@ -40,12 +40,13 @@ const controller = {
     oneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const twittId = req.params.twittId;
-            const twitt = yield twitt_1.default
+            const twittResponse = yield twitt_1.default
                 .findById(twittId)
                 .select('-password -email')
                 .populate('user', '-password -email')
-                .populate('comments')
-                .populate('comments.user');
+                .populate('comments');
+            // two awaits bc we are populating comments and then user inside comments
+            const twitt = yield (twittResponse === null || twittResponse === void 0 ? void 0 : twittResponse.populate('comments.user'));
             return res.status(200).json(twitt);
         }
         catch (error) {
