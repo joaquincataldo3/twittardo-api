@@ -34,6 +34,7 @@ const controller = {
                 .findById(twittId)
                 .select('-password -email')
                 .populate('user', '-password -email')
+                .populate('comments')
             return res.status(200).json(twitt)
         } catch (error) {
             console.log(error)
