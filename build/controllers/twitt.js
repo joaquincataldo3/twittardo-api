@@ -24,10 +24,11 @@ const controller = {
             const twitts = yield twitt_1.default
                 .find()
                 .sort({ createdAt: -1 })
-                .skip(pagesNumber * twittPerPage) // pages could be 0, 1, 2 etc. times the movie per page
-                .limit(twittPerPage) // limiting it to 5 movies per page   
+                .skip(pagesNumber * twittPerPage)
+                .limit(twittPerPage)
                 .select('-password -email')
                 .populate('comments')
+                .populate('comments.user')
                 .populate('user', '-password -email');
             return res.status(200).json(twitts);
         }
@@ -43,7 +44,8 @@ const controller = {
                 .findById(twittId)
                 .select('-password -email')
                 .populate('user', '-password -email')
-                .populate('comments');
+                .populate('comments')
+                .populate('comments.user');
             return res.status(200).json(twitt);
         }
         catch (error) {
