@@ -136,16 +136,15 @@ const controller = {
         }
     })),
     checkLogin: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        /* const userAccessToken = req.cookies['user_access_token']; */
-        return res.status(200).json({ msg: req.cookies['user_access_token'] });
-        /*  if (userAccessToken) {
-             const secretKey = process.env.JWT_KEY!
-             const decodedToken = jwt.verify(userAccessToken, secretKey);
- 
-             return res.status(200).json({ isLoggedIn: true, decodedToken});
-         } else {
-             return res.status(401).json({ isLoggedIn: false });
-         } */
+        const userAccessToken = req.cookies['user_access_token'];
+        if (userAccessToken) {
+            const secretKey = process.env.JWT_KEY;
+            const decodedToken = jsonwebtoken_1.default.verify(userAccessToken, secretKey);
+            return res.status(200).json({ isLoggedIn: true, user: decodedToken });
+        }
+        else {
+            return res.status(401).json({ isLoggedIn: false });
+        }
     }),
     updateUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
