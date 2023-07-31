@@ -7,6 +7,7 @@ const router = express.Router()
 router.get('/', verifyToken, verifyAdmin, userController.allUsers)
 router.post('/register', avatarUpload.single('avatar'), userController.register)
 router.post('/login', userController.login)
+router.get('/check-login', userController.checkLogin)
 router.get('/logout', verifyToken, verifyUserOrAdmin, userController.logout)
 router.get('/:userId', verifyToken, verifyUserOrAdmin, userController.oneUser)
 

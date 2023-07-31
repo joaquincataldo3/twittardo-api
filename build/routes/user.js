@@ -11,6 +11,7 @@ const router = express_1.default.Router();
 router.get('/', auth_1.verifyToken, auth_1.verifyAdmin, user_1.default.allUsers);
 router.post('/register', avatarUpload_1.default.single('avatar'), user_1.default.register);
 router.post('/login', user_1.default.login);
+router.get('/check-login', user_1.default.checkLogin);
 router.get('/logout', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.logout);
 router.get('/:userId', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.oneUser);
 router.put('/:userId/update', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.follow);

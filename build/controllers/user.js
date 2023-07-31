@@ -87,6 +87,7 @@ const controller = {
                 if (!verifyPassword) {
                     return res.status(404).json({ msg: 'Credenciales invalidas' });
                 }
+                delete user.password;
                 const token = jsonwebtoken_1.default.sign(Object.assign({}, user), secretKey);
                 res.cookie('user_access_token', token, {
                     httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
@@ -134,6 +135,17 @@ const controller = {
             return res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` });
         }
     })),
+    checkLogin: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const userAccessToken = req.cookies['user_access_token'];
+        if (userAccessToken) {
+            const secretKey = process.env.JWT_KEY;
+            const decodedToken = jsonwebtoken_1.default.verify(userAccessToken, secretKey);
+            return res.status(200).json({ isLoggedIn: true, user: decodedToken });
+        }
+        else {
+            return res.status(401).json({ isLoggedIn: false });
+        }
+    }),
     updateUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const userId = req.params.userId;

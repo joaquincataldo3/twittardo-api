@@ -13,8 +13,8 @@ const controller = {
     allUsers: async (_req: Request, res: Response) => {
         try {
             const users = await User
-            .find()
-            .select('-_id -password -email')
+                .find()
+                .select('-_id -password -email')
             return res.status(200).json(users)
         } catch (error) {
             console.log(error)
@@ -29,16 +29,16 @@ const controller = {
                 return res.status(400).json({ msg: 'Id de usuario invalido' })
             }
             const userToFind = await User
-            .findById(id)
-            .populate('twitts')
-            
+                .findById(id)
+                .populate('twitts')
+
             if (!userToFind) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' })
-            } 
+            }
             const user = userToFind
             return res.status(200).json(user)
         } catch (error) {
-            
+
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
         }
 
@@ -64,13 +64,13 @@ const controller = {
                 userBeingFollowedId,
                 { $addToSet: { followers: userWantingToFollowId } },
                 { new: true }
-              );
-              
-              const userFollowingUpdated = await User.findByIdAndUpdate(
+            );
+
+            const userFollowingUpdated = await User.findByIdAndUpdate(
                 userWantingToFollowId,
                 { $addToSet: { following: userBeingFollowedId } },
                 { new: true }
-              );
+            );
 
 
             return res.status(201).json({ userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated })
@@ -98,7 +98,8 @@ const controller = {
                 if (!verifyPassword) {
                     return res.status(404).json({ msg: 'Credenciales invalidas' })
                 }
-                const token = jwt.sign({ ...user} , secretKey)
+                delete user.password;
+                const token = jwt.sign({ ...user }, secretKey)
                 res.cookie('user_access_token', token, {
                     httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
                 })
@@ -122,14 +123,14 @@ const controller = {
                 return res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
             }
 
-            const emailAlreadyInDb = await User.find({email})
+            const emailAlreadyInDb = await User.find({ email })
 
             if (emailAlreadyInDb.length > 0) {
                 return res.status(409).json({ msg: 'Email ya en uso' })
             }
 
 
-            const usernameAlreadyInDb = await User.find({ username})
+            const usernameAlreadyInDb = await User.find({ username })
 
             if (usernameAlreadyInDb.length > 0) {
                 return res.status(409).json({ msg: 'Nombre de usuario ya en uso' })
@@ -158,6 +159,19 @@ const controller = {
         }
 
     }),
+    checkLogin: async (req: Request, res: Response) => {
+        const userAccessToken = req.cookies['user_access_token'];
+
+
+        if (userAccessToken) {
+            const secretKey = process.env.JWT_KEY!
+            const decodedToken = jwt.verify(userAccessToken, secretKey);
+
+            return res.status(200).json({ isLoggedIn: true, user: decodedToken});
+        } else {
+            return res.status(401).json({ isLoggedIn: false });
+        }
+    },
     updateUser: async (req: Request, res: Response) => {
         try {
             const userId = req.params.userId;
