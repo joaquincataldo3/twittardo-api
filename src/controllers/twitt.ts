@@ -2,26 +2,42 @@ import { Request, Response } from 'express'
 import Twitt from '../database/models/twitt'
 import User from '../database/models/user'
 import { isValidObjectId } from 'mongoose'
-import { TwittT } from '../types'
+import { TwittT, TwittTPopulated } from '../types'
 
 
 
 const controller = {
     allTwitts: async (req: Request, res: Response) => {
         try {
-            const pages = req.query.p;
-            const pagesNumber = Number(pages)
-            const twittPerPage = 5;
-            const twitts = await Twitt
+            const pages: string = String(req.query.p); 
+            const pagesNumber: number = Number(pages)
+            const twittPerPage: number = 5;
+            const twittsResponse = await Twitt
                 .find()
                 .sort({ createdAt: -1 })
                 .skip(pagesNumber * twittPerPage) 
                 .limit(twittPerPage)
                 .select('-password -email')
-                .populate('comments')
-                .populate('comments.user')
                 .populate('user', '-password -email')
-            return res.status(200).json(twitts)
+                .populate('comments')
+            // two awaits bc we are populating comments and then user inside comments
+            if(twittsResponse){
+                await Promise.all(twittsResponse.map(async (twitt: any) => {
+                    if(twitt.comments.length > 0){
+                        await twitt.populate('comments.user');
+                    }                   
+                }));
+            }
+            const twitts: TwittTPopulated[] = twittsResponse.map((twitt: any) => ({
+                twitt: twitt.twitt,
+                image: twitt.image,
+                user: twitt.user,
+                comments: twitt.comments,
+                favourites: twitt.favourites,
+                commentsNumber: twitt.commentsNumber,
+                // Aquí debes agregar las propiedades pobladas de user y comments
+            }));
+            return res.status(200).json(twitts);
         } catch (error) {
             console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaban los twitts: ${error}` })
@@ -30,15 +46,34 @@ const controller = {
     },
     oneTwitt: async (req: Request, res: Response) => {
         try {
-            const twittId = req.params.twittId
+            const twittId: string = req.params.twittId
+            if(!isValidObjectId(twittId)){
+                return res.status(400).json({msg: 'Twitt o usuario id invalido'})
+            }
             const twittResponse = await Twitt
                 .findById(twittId)
                 .select('-password -email')
                 .populate('user', '-password -email')
                 .populate('comments')
-            // two awaits bc we are populating comments and then user inside comments
-            const twitt = await twittResponse?.populate('comments.user')
-            return res.status(200).json(twitt)
+            if(!twittResponse){
+                return res.status(404).json({msg: "Twitt no encontrado"})
+            } else {
+                await Promise.all(twittResponse.map(async (twitt: any) => {
+                    if(twitt.comments.length > 0){
+                        await twitt.populate('comments.user').execPopulate();
+                    }                   
+                }));
+                const twitt: TwittTPopulated = {
+                    twitt: twittResponse.twitt,
+                    image: twittResponse.image,
+                    user: twittResponse.user,
+                    comments: twittResponse.comments,
+                    favourites: twittResponse.favourites,
+                    commentsNumber: twittResponse.commentsNumber,
+                    // Aquí debes agregar las propiedades pobladas de user y comments
+                }; 
+                return res.status(200).json(twitt)
+            }
         } catch (error) {
             console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaba un twitt en particular: ${error}` })
@@ -50,6 +85,10 @@ const controller = {
             const twittId = req.params.twittId
             const userId = req.params.userId
 
+            if(!isValidObjectId(userId) || !isValidObjectId(twittId)){
+                return res.status(400).json({msg: 'Twitt o usuario id invalido'})
+            }
+            
             await Twitt.findByIdAndUpdate(twittId, 
                 { $inc: { favourites: 1 } },
                 { new: true });

@@ -18,18 +18,34 @@ const mongoose_1 = require("mongoose");
 const controller = {
     allTwitts: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const pages = req.query.p;
+            const pages = String(req.query.p);
             const pagesNumber = Number(pages);
             const twittPerPage = 5;
-            const twitts = yield twitt_1.default
+            const twittsResponse = yield twitt_1.default
                 .find()
                 .sort({ createdAt: -1 })
                 .skip(pagesNumber * twittPerPage)
                 .limit(twittPerPage)
                 .select('-password -email')
-                .populate('comments')
-                .populate('comments.user')
-                .populate('user', '-password -email');
+                .populate('user', '-password -email')
+                .populate('comments');
+            // two awaits bc we are populating comments and then user inside comments
+            if (twittsResponse) {
+                yield Promise.all(twittsResponse.map((twitt) => __awaiter(void 0, void 0, void 0, function* () {
+                    if (twitt.comments.length > 0) {
+                        yield twitt.populate('comments.user');
+                    }
+                })));
+            }
+            const twitts = twittsResponse.map((twitt) => ({
+                twitt: twitt.twitt,
+                image: twitt.image,
+                user: twitt.user,
+                comments: twitt.comments,
+                favourites: twitt.favourites,
+                commentsNumber: twitt.commentsNumber,
+                // Aquí debes agregar las propiedades pobladas de user y comments
+            }));
             return res.status(200).json(twitts);
         }
         catch (error) {
@@ -40,14 +56,34 @@ const controller = {
     oneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const twittId = req.params.twittId;
+            if (!(0, mongoose_1.isValidObjectId)(twittId)) {
+                return res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+            }
             const twittResponse = yield twitt_1.default
                 .findById(twittId)
                 .select('-password -email')
                 .populate('user', '-password -email')
                 .populate('comments');
-            // two awaits bc we are populating comments and then user inside comments
-            const twitt = yield (twittResponse === null || twittResponse === void 0 ? void 0 : twittResponse.populate('comments.user'));
-            return res.status(200).json(twitt);
+            if (!twittResponse) {
+                return res.status(404).json({ msg: "Twitt no encontrado" });
+            }
+            else {
+                yield Promise.all(twittResponse.map((twitt) => __awaiter(void 0, void 0, void 0, function* () {
+                    if (twitt.comments.length > 0) {
+                        yield twitt.populate('comments.user').execPopulate();
+                    }
+                })));
+                const twitt = {
+                    twitt: twittResponse.twitt,
+                    image: twittResponse.image,
+                    user: twittResponse.user,
+                    comments: twittResponse.comments,
+                    favourites: twittResponse.favourites,
+                    commentsNumber: twittResponse.commentsNumber,
+                    // Aquí debes agregar las propiedades pobladas de user y comments
+                };
+                return res.status(200).json(twitt);
+            }
         }
         catch (error) {
             console.log(error);
@@ -58,6 +94,9 @@ const controller = {
         try {
             const twittId = req.params.twittId;
             const userId = req.params.userId;
+            if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
+                return res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+            }
             yield twitt_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: 1 } }, { new: true });
             yield user_1.default.findByIdAndUpdate(userId, {
                 $addToSet: {

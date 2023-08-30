@@ -1,4 +1,4 @@
-
+import {Model, Document} from 'mongoose'
 
 export interface UserT  {
     _id?: string,
@@ -18,10 +18,17 @@ export interface TwittT  {
     commentsNumber: number
 }
 
+export interface TwittTPopulated extends TwittT {
+    user: UserT; 
+    comments: CommentT
+}
+
+
 export interface CommentT  {
     comment: string,
     user: string
 }
+
 
 export interface SchemaNameT  {
     User: string,

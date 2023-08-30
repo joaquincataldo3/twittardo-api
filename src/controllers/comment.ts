@@ -18,8 +18,8 @@ const controller = {
     },
     createComment: async (req: Request, res: Response) => {
         try {
-            const userId = req.params.userId
-            const twittId = req.params.twittId
+            const userId: string = req.params.userId
+            const twittId: string = req.params.twittId
 
             
             if(!isValidObjectId(userId) || !isValidObjectId(twittId)){
