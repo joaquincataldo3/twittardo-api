@@ -21,13 +21,22 @@ dotenv_1.default.config();
 const controller = {
     allUsers: (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const users = yield user_1.default
+            const usersResponse = yield user_1.default
                 .find()
                 .select('-_id -password -email');
+            const users = usersResponse.map((user) => ({
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                isAdmin: user.isAdmin,
+                favourites: user.favourites,
+                twitts: user.twitts,
+                followers: user.followers,
+                following: user.following
+            }));
             return res.status(200).json(users);
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` });
         }
     }),
@@ -40,11 +49,21 @@ const controller = {
             const userToFind = yield user_1.default
                 .findById(id)
                 .populate('twitts');
-            if (!userToFind) {
+            if (userToFind === null) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
-            const user = userToFind;
-            return res.status(200).json(user);
+            const userFound = userToFind;
+            const oneUser = {
+                username: userFound.username,
+                email: userFound.email,
+                avatar: userFound.avatar,
+                isAdmin: userFound.isAdmin,
+                favourites: userFound.favourites,
+                twitts: userFound.twitts,
+                followers: userFound.followers,
+                following: userFound.following
+            };
+            return res.status(200).json(oneUser);
         }
         catch (error) {
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` });
@@ -80,20 +99,27 @@ const controller = {
             const verifyEmail = yield user_1.default.findOne({ email });
             if (!verifyEmail) {
                 return res.status(404).json({ msg: 'Credenciales invalidas' });
+            } // user could be null
+            const userToVerify = verifyEmail;
+            const verifyPassword = yield bcryptjs_1.default.compare(password, userToVerify.password);
+            if (!verifyPassword) {
+                return res.status(404).json({ msg: 'Credenciales invalidas' });
             }
-            else { // user could be null
-                const user = verifyEmail;
-                const verifyPassword = bcryptjs_1.default.compare(password, user.password);
-                if (!verifyPassword) {
-                    return res.status(404).json({ msg: 'Credenciales invalidas' });
-                }
-                delete user.password;
-                const token = jsonwebtoken_1.default.sign(Object.assign({}, user), secretKey);
-                res.cookie('user_access_token', token, {
-                    httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
-                });
-                return res.status(200).json({ user, token });
-            }
+            const userVerified = {
+                username: verifyEmail.username,
+                email: verifyEmail.email,
+                avatar: verifyEmail.avatar,
+                isAdmin: verifyEmail.isAdmin,
+                favourites: verifyEmail.favourites,
+                twitts: verifyEmail.twitts,
+                followers: verifyEmail.followers,
+                following: verifyEmail.following
+            };
+            const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
+            res.cookie('user_access_token', token, {
+                httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
+            });
+            return res.status(200).json({ userVerified, token });
         }
         catch (error) {
             console.log(error);
@@ -102,9 +128,7 @@ const controller = {
     })),
     register: ((req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const password = req.body.password;
-            const username = req.body.username;
-            const email = req.body.email;
+            const { email, username, password } = req.body;
             const avatar = req.file;
             if (!email || !username || !password) {
                 return res.status(400).json({ msg: 'Es necesario completar los campos solicitados' });
@@ -117,7 +141,7 @@ const controller = {
             if (usernameAlreadyInDb.length > 0) {
                 return res.status(409).json({ msg: 'Nombre de usuario ya en uso' });
             }
-            const hashPassword = bcryptjs_1.default.hashSync(password, 10);
+            const hashPassword = yield bcryptjs_1.default.hash(password, 10);
             const newUserData = {
                 email,
                 username,
@@ -128,10 +152,19 @@ const controller = {
                 newUserData.avatar = avatar.path;
             }
             const newUser = yield user_1.default.create(newUserData);
-            return res.status(201).json(newUser);
+            const userCreated = {
+                username: newUser.username,
+                email: newUser.email,
+                avatar: newUser.avatar ? newUser.avatar : '',
+                isAdmin: newUser.isAdmin,
+                favourites: [],
+                twitts: [],
+                followers: [],
+                following: []
+            };
+            return res.status(201).json(userCreated);
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` });
         }
     })),

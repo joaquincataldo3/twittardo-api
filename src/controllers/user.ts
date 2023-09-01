@@ -1,52 +1,69 @@
 
 import { Request, Response } from 'express'
 import User from '../database/models/user'
-import { UserT } from '../types'
+import { LoginUser, RegisterUser, UserT, UserToFront } from '../types'
 import { isValidObjectId } from 'mongoose'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
+
 dotenv.config()
 
 
 const controller = {
     allUsers: async (_req: Request, res: Response) => {
         try {
-            const users = await User
+            const usersResponse = await User
                 .find()
                 .select('-_id -password -email')
+            const users: UserToFront[] = usersResponse.map((user: any) => ({
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                isAdmin: user.isAdmin,
+                favourites: user.favourites,
+                twitts: user.twitts,
+                followers: user.followers,
+                following: user.following
+            }));
             return res.status(200).json(users)
         } catch (error) {
-            console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` })
         }
-
     },
     oneUser: async (req: Request, res: Response) => {
         try {
-            const id = req.params.userId
+            const id: string = req.params.userId
             if (!isValidObjectId(id)) {
                 return res.status(400).json({ msg: 'Id de usuario invalido' })
             }
             const userToFind = await User
                 .findById(id)
                 .populate('twitts')
-
-            if (!userToFind) {
-                return res.status(404).json({ msg: 'Usuario no encontrado' })
+            if (userToFind === null) {
+                return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
-            const user = userToFind
-            return res.status(200).json(user)
+            const userFound = userToFind
+            const oneUser: UserToFront = {
+                username: userFound.username,
+                email: userFound.email,
+                avatar: userFound.avatar,
+                isAdmin: userFound.isAdmin,
+                favourites: userFound.favourites,
+                twitts: userFound.twitts,
+                followers: userFound.followers,
+                following: userFound.following
+            }
+            return res.status(200).json(oneUser)
         } catch (error) {
-
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
         }
 
     },
     follow: async (req: Request, res: Response) => {
         try {
-            const userBeingFollowedId = req.params.userBFId;
-            const userWantingToFollowId = req.params.userWFId;
+            const userBeingFollowedId: string = req.params.userBFId;
+            const userWantingToFollowId: string = req.params.userWFId;
 
             if (!isValidObjectId(userBeingFollowedId) || !isValidObjectId(userWantingToFollowId)) {
                 return res.status(400).json({ msg: 'Id de usuarios invalidos' })
@@ -81,7 +98,7 @@ const controller = {
     },
     login: (async (req: Request, res: Response) => {
         try {
-            const { password, email } = req.body
+            const { password, email }: LoginUser = req.body
             const secretKey = process.env.JWT_KEY!
 
             if (!password || !email) {
@@ -89,23 +106,32 @@ const controller = {
             }
 
             const verifyEmail = await User.findOne({ email })
-
+            
             if (!verifyEmail) {
                 return res.status(404).json({ msg: 'Credenciales invalidas' })
-            } else { // user could be null
-                const user = verifyEmail
-                const verifyPassword = bcrypt.compare(password, user.password)
-                if (!verifyPassword) {
-                    return res.status(404).json({ msg: 'Credenciales invalidas' })
-                }
-                delete user.password;
-                const token = jwt.sign({ ...user }, secretKey)
-                res.cookie('user_access_token', token, {
-                    httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
-                })
-
-                return res.status(200).json({ user, token })
+            } // user could be null
+            const userToVerify = verifyEmail
+            const verifyPassword = await bcrypt.compare(password, userToVerify.password)
+            if (!verifyPassword) {
+                return res.status(404).json({ msg: 'Credenciales invalidas' })
             }
+            const userVerified: UserToFront = {
+                username: verifyEmail.username,
+                email: verifyEmail.email,
+                avatar: verifyEmail.avatar,
+                isAdmin: verifyEmail.isAdmin,
+                favourites: verifyEmail.favourites,
+                twitts: verifyEmail.twitts,
+                followers: verifyEmail.followers,
+                following: verifyEmail.following
+            }
+            const token = jwt.sign({ ...userVerified }, secretKey)
+            res.cookie('user_access_token', token, {
+                httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
+            })
+
+            return res.status(200).json({ userVerified, token })
+
         } catch (error) {
             console.log(error)
             return res.status(400).json({ msg: `Problema mientras se logueaba al usuario: ${error}` })
@@ -114,10 +140,8 @@ const controller = {
     }),
     register: (async (req: Request, res: Response) => {
         try {
-            const password = req.body.password
-            const username = req.body.username
-            const email = req.body.email
-            const avatar = req.file
+            const {email, username, password}: RegisterUser = req.body
+            const avatar = req.file as Express.Multer.File
 
             if (!email || !username || !password) {
                 return res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
@@ -129,7 +153,6 @@ const controller = {
                 return res.status(409).json({ msg: 'Email ya en uso' })
             }
 
-
             const usernameAlreadyInDb = await User.find({ username })
 
             if (usernameAlreadyInDb.length > 0) {
@@ -137,7 +160,7 @@ const controller = {
             }
 
 
-            const hashPassword = bcrypt.hashSync(password, 10)
+            const hashPassword = await bcrypt.hash(password, 10)
 
             const newUserData: UserT = {
                 email,
@@ -151,30 +174,37 @@ const controller = {
             }
 
             const newUser = await User.create(newUserData)
-
-            return res.status(201).json(newUser);
+            const userCreated: UserToFront = {
+                username: newUser.username,
+                email: newUser.email,
+                avatar: newUser.avatar ? newUser.avatar : '',
+                isAdmin: newUser.isAdmin,
+                favourites: [],
+                twitts: [],
+                followers: [],
+                following: []
+            }
+            return res.status(201).json(userCreated);
         } catch (error) {
-            console.log(error)
             return res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
         }
 
     }),
     checkLogin: async (req: Request, res: Response) => {
-        const userAccessToken = req.cookies['user_access_token'];
-
+        const userAccessToken: string | null = req.cookies['user_access_token'];
 
         if (userAccessToken) {
             const secretKey = process.env.JWT_KEY!
             const decodedToken = jwt.verify(userAccessToken, secretKey);
 
-            return res.status(200).json({ isLoggedIn: true, user: decodedToken});
+            return res.status(200).json({ isLoggedIn: true, user: decodedToken });
         } else {
             return res.status(401).json({ isLoggedIn: false });
         }
     },
     updateUser: async (req: Request, res: Response) => {
         try {
-            const userId = req.params.userId;
+            const userId: string = req.params.userId;
 
             if (!isValidObjectId(userId)) {
                 res.status(400).json({ msg: 'Id de usuario invalido' })
@@ -212,8 +242,8 @@ const controller = {
     convertUserToAdmin: async (req: Request, res: Response) => {
 
         try {
-            const userId = req.params.userId;
-            const key = req.body.key
+            const userId: string = req.params.userId;
+            const key: string = req.body.key
             const adminKey = process.env.ADMIN_KEY
 
             if (!isValidObjectId(userId)) {
@@ -243,7 +273,7 @@ const controller = {
     },
     deleteUser: async (req: Request, res: Response) => {
         try {
-            const userId = req.params.userId
+            const userId: string = req.params.userId
 
             if (!isValidObjectId(userId)) {
                 res.status(400).json({ msg: 'Id de usuario invalido' })
