@@ -1,14 +1,19 @@
 
-import { Request, Response } from 'express'
 import User from '../database/models/user'
-import { LoginUser, RegisterUser, UserT, UserToFront } from '../types'
-import { isValidObjectId } from 'mongoose'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
+import { LoginUser, RegisterUser, UserT, UserToFront } from '../types'
+import { isValidObjectId } from 'mongoose'
+import { Request, Response } from 'express'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { s3Config } from '../utils/s3Config'
+import { randomImageName } from '../utils/randomImageName'
 
 dotenv.config()
 
+const bucketName = process.env.BUCKET_NAME;
+const s3 = new S3Client(s3Config);
 
 const controller = {
     allUsers: async (_req: Request, res: Response) => {
@@ -17,6 +22,7 @@ const controller = {
                 .find()
                 .select('-_id -password -email')
             const users: UserToFront[] = usersResponse.map((user: any) => ({
+                _id: user._id,
                 username: user.username,
                 email: user.email,
                 avatar: user.avatar,
@@ -45,6 +51,7 @@ const controller = {
             }
             const userFound = userToFind
             const oneUser: UserToFront = {
+                _id: userFound._id as string,
                 username: userFound.username,
                 email: userFound.email,
                 avatar: userFound.avatar,
@@ -116,6 +123,7 @@ const controller = {
                 return res.status(404).json({ msg: 'Credenciales invalidas' })
             }
             const userVerified: UserToFront = {
+                _id: verifyEmail._id as string,
                 username: verifyEmail.username,
                 email: verifyEmail.email,
                 avatar: verifyEmail.avatar,
@@ -170,11 +178,22 @@ const controller = {
             }
 
             if (avatar) {
-                newUserData.avatar = avatar.path
+                 // armamos el objeto que tiene que tener estos parametros para el bucket
+                 const bucketParams = {
+                    Bucket: bucketName,
+                    Key: randomImageName(),
+                    Body: avatar.buffer,
+                    ContentType: avatar.mimetype
+                };
+                // instanciamos la clase de put object comand con los params
+                const command = new PutObjectCommand(bucketParams);
+                // enviamos
+                await s3.send(command)
             }
 
             const newUser = await User.create(newUserData)
             const userCreated: UserToFront = {
+                _id: newUser._id as string,
                 username: newUser.username,
                 email: newUser.email,
                 avatar: newUser.avatar ? newUser.avatar : '',

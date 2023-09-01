@@ -15,7 +15,6 @@ const app = express()
 const MONGO_URI = process.env.MONGO_URI
 
 app.use('/images', express.static(path.join(__dirname, '../')));
-/* app.use('/avatars', express.static(path.join(__dirname, '../'))); */
 
 app.use(session({ 
     secret: "Global session",

@@ -33,18 +33,19 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
 
 
 const verifyUserOrAdmin = async (req: Request, res: Response, next: NextFunction) => {
-
     try {
 
-        const compareUser = await User.findById(req.user._doc._id)
-        
-        const user: UserT = req.user._doc
-
-        if (user.isAdmin || compareUser) {
+        if(req.user.isAdmin == 1){
             return next()
-        } else {
+        }
+
+        const compareUser = await User.findById(req.user._id)
+
+        if(!compareUser){
             return res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
         }
+
+       return next();
 
     } catch (error) {
         console.log(error)

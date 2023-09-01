@@ -1,7 +1,6 @@
 import { Model, Document } from 'mongoose'
 
 export interface UserT {
-    _id?: string,
     email: string,
     username: string,
     password: string,
@@ -14,6 +13,7 @@ export interface UserT {
 }
 
 export interface UserToFront {
+    _id: string,
     username: string,
     email: string,
     avatar: string,
@@ -26,7 +26,8 @@ export interface UserToFront {
 
 export interface TwittT {
     twitt: string,
-    image?: string,
+    image?: string | null,
+    image_url?: string | null,
     user: string,
     comments?: string[]
     favourites?: number,

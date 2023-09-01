@@ -1,42 +1,63 @@
-import { Request, Response } from 'express'
-import Twitt from '../database/models/twitt'
-import User from '../database/models/user'
-import { isValidObjectId } from 'mongoose'
-import { TwittT, TwittTPopulated } from '../types'
+import Twitt from '../database/models/twitt';
+import User from '../database/models/user';
+import dotenv from 'dotenv';
+import { Request, Response } from 'express';
+import { isValidObjectId } from 'mongoose';
+import { TwittT, TwittTPopulated } from '../types';
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { s3Config } from '../utils/s3Config';
+import { randomImageName } from '../utils/randomImageName';
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+dotenv.config()
+const bucketName = process.env.BUCKET_NAME;
 
+const s3 = new S3Client(s3Config);
 
 const controller = {
     allTwitts: async (req: Request, res: Response) => {
         try {
-            const pages: string = String(req.query.p); 
+            const pages: string = String(req.query.p);
             const pagesNumber: number = Number(pages)
             const twittPerPage: number = 5;
             const twittsResponse = await Twitt
                 .find()
                 .sort({ createdAt: -1 })
-                .skip(pagesNumber * twittPerPage) 
+                .skip(pagesNumber * twittPerPage)
                 .limit(twittPerPage)
                 .select('-password -email')
                 .populate('user', '-password -email')
                 .populate('comments')
             // two awaits bc we are populating comments and then user inside comments
-            if(twittsResponse){
+            if (twittsResponse) {
                 await Promise.all(twittsResponse.map(async (twitt: any) => {
-                    if(twitt.comments.length > 0){
+                    if (twitt.comments.length > 0) {
                         await twitt.populate('comments.user');
-                    }                   
+                    }
                 }));
             }
             const twitts: TwittTPopulated[] = twittsResponse.map((twitt: any) => ({
                 twitt: twitt.twitt,
-                image: twitt.image,
                 user: twitt.user,
+                image: twitt.image,
                 comments: twitt.comments,
                 favourites: twitt.favourites,
                 commentsNumber: twitt.commentsNumber,
-                // Aquí debes agregar las propiedades pobladas de user y comments
             }));
+            // aca voy por cada imagen y hago un getobjectcommand para obtener el url
+            for (let i = 0; i < twitts.length; i++) {
+                let twitt = twitts[i];
+                if (twitt.image) {
+                    let getObjectParams = {
+                        Bucket: bucketName,
+                        Key: twitt.image
+                    }
+                    let command = new GetObjectCommand(getObjectParams);
+                    let url = await getSignedUrl(s3, command, { expiresIn: 1800 }); //30 min
+                    twitt.image_url = url; 
+                }
+            };
+
             return res.status(200).json(twitts);
         } catch (error) {
             console.log(error)
@@ -47,21 +68,21 @@ const controller = {
     oneTwitt: async (req: Request, res: Response) => {
         try {
             const twittId: string = req.params.twittId
-            if(!isValidObjectId(twittId)){
-                return res.status(400).json({msg: 'Twitt o usuario id invalido'})
+            if (!isValidObjectId(twittId)) {
+                return res.status(400).json({ msg: 'Twitt o usuario id invalido' })
             }
             const twittResponse = await Twitt
                 .findById(twittId)
                 .select('-password -email')
                 .populate('user', '-password -email')
                 .populate('comments')
-            if(!twittResponse){
-                return res.status(404).json({msg: "Twitt no encontrado"})
+            if (!twittResponse) {
+                return res.status(404).json({ msg: "Twitt no encontrado" })
             } else {
                 await Promise.all(twittResponse.map(async (twitt: any) => {
-                    if(twitt.comments.length > 0){
+                    if (twitt.comments.length > 0) {
                         await twitt.populate('comments.user').execPopulate();
-                    }                   
+                    }
                 }));
                 const twitt: TwittTPopulated = {
                     twitt: twittResponse.twitt,
@@ -71,7 +92,7 @@ const controller = {
                     favourites: twittResponse.favourites,
                     commentsNumber: twittResponse.commentsNumber,
                     // Aquí debes agregar las propiedades pobladas de user y comments
-                }; 
+                };
                 return res.status(200).json(twitt)
             }
         } catch (error) {
@@ -85,24 +106,24 @@ const controller = {
             const twittId = req.params.twittId
             const userId = req.params.userId
 
-            if(!isValidObjectId(userId) || !isValidObjectId(twittId)){
-                return res.status(400).json({msg: 'Twitt o usuario id invalido'})
+            if (!isValidObjectId(userId) || !isValidObjectId(twittId)) {
+                return res.status(400).json({ msg: 'Twitt o usuario id invalido' })
             }
-            
-            await Twitt.findByIdAndUpdate(twittId, 
+
+            await Twitt.findByIdAndUpdate(twittId,
                 { $inc: { favourites: 1 } },
                 { new: true });
-            
-           await User.findByIdAndUpdate(userId, 
+
+            await User.findByIdAndUpdate(userId,
                 {
-                $addToSet: { 
-                    favourites: twittId
-                },
-            }, {
+                    $addToSet: {
+                        favourites: twittId
+                    },
+                }, {
                 new: true
             })
 
-            return res.status(201).json({msg: 'Twitt faveado satisfactoriamente'})
+            return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' })
 
         } catch (error) {
             console.log(error)
@@ -111,22 +132,38 @@ const controller = {
     },
     createTwitt: async (req: Request, res: Response) => {
         try {
-            const userId = req.params.userId
+            const userId: string = req.params.userId
+            const twittImage = req.file as Express.Multer.File
 
             if (!isValidObjectId(userId)) {
                 return res.status(400).json({ msg: 'Id de usuario invalido' })
+            }
+
+            let randomName = null;
+            if (twittImage) {
+                // armamos el objeto que tiene que tener estos parametros para el bucket
+                const bucketParams = {
+                    Bucket: bucketName,
+                    Key: randomImageName(),
+                    Body: twittImage.buffer,
+                    ContentType: twittImage.mimetype
+                };
+                randomName = bucketParams.Key;
+                // instanciamos la clase de put object comand con los params
+                const command = new PutObjectCommand(bucketParams);
+                // enviamos
+                await s3.send(command)
             }
 
             const twittData: TwittT = {
                 twitt: req.body.twitt,
                 favourites: 0,
                 commentsNumber: 0,
-                user: userId
-            }
+                user: userId,
+                image: randomName != null ? randomName : null,
+                image_url: null
+            };
 
-            if (req.file) {
-                twittData.image = req.file.path
-            }
 
             const newTwitt = await Twitt.create(twittData)
             await User.findByIdAndUpdate(userId,
