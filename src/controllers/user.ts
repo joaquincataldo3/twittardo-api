@@ -6,14 +6,9 @@ import dotenv from 'dotenv'
 import { LoginUser, RegisterUser, UserT, UserToFront } from '../types'
 import { isValidObjectId } from 'mongoose'
 import { Request, Response } from 'express'
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { s3Config } from '../utils/s3Config'
-import { randomImageName } from '../utils/randomImageName'
+import { handlePutCommand, handleDeleteCommand } from '../utils/s3ConfigCommands'
 
 dotenv.config()
-
-const bucketName = process.env.BUCKET_NAME;
-const s3 = new S3Client(s3Config);
 
 const controller = {
     allUsers: async (_req: Request, res: Response) => {
@@ -167,28 +162,20 @@ const controller = {
                 return res.status(409).json({ msg: 'Nombre de usuario ya en uso' })
             }
 
-
             const hashPassword = await bcrypt.hash(password, 10)
+
+            let randomName = null;
+
+            if(avatar){
+                randomName = await handlePutCommand(avatar);
+            }
 
             const newUserData: UserT = {
                 email,
                 username,
                 password: hashPassword,
-                isAdmin: 0
-            }
-
-            if (avatar) {
-                 // armamos el objeto que tiene que tener estos parametros para el bucket
-                 const bucketParams = {
-                    Bucket: bucketName,
-                    Key: randomImageName(),
-                    Body: avatar.buffer,
-                    ContentType: avatar.mimetype
-                };
-                // instanciamos la clase de put object comand con los params
-                const command = new PutObjectCommand(bucketParams);
-                // enviamos
-                await s3.send(command)
+                isAdmin: 0,
+                avatar: avatar ? randomName : null
             }
 
             const newUser = await User.create(newUserData)
@@ -196,7 +183,7 @@ const controller = {
                 _id: newUser._id as string,
                 username: newUser.username,
                 email: newUser.email,
-                avatar: newUser.avatar ? newUser.avatar : '',
+                avatar: newUser.avatar,
                 isAdmin: newUser.isAdmin,
                 favourites: [],
                 twitts: [],
@@ -235,12 +222,24 @@ const controller = {
                 res.status(404).json({ msg: 'Usuario no encontrado' })
             } else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
+                const bodyAvatar = req.file;
+
+                let randomName = null;
+                if(user.avatar && bodyAvatar){
+                    await handleDeleteCommand(user.avatar);
+                    randomName = await handlePutCommand(bodyAvatar);
+                } else if(!user.avatar && bodyAvatar ){
+                    randomName = await handlePutCommand(bodyAvatar);
+                } else if(!user.avatar && !bodyAvatar){
+                    await handleDeleteCommand(user.avatar);
+                }
 
                 const dataToUpdate: UserT = {
                     username: req.body.username ? req.body.username : user.username,
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
-                    isAdmin: 0
+                    isAdmin: 0,
+                    avatar: randomName ? randomName : null
                 }
 
                 if (req.file) {

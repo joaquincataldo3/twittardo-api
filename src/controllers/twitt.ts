@@ -4,10 +4,11 @@ import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
 import { TwittT, TwittTPopulated } from '../types';
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { s3Config } from '../utils/s3Config';
+import { S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
+import { s3Config } from '../utils/s3ConfigCommands';
 import { randomImageName } from '../utils/randomImageName';
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { handleGetCommand } from '../utils/s3ConfigCommands';
+
 
 dotenv.config()
 const bucketName = process.env.BUCKET_NAME;
@@ -48,12 +49,7 @@ const controller = {
             for (let i = 0; i < twitts.length; i++) {
                 let twitt = twitts[i];
                 if (twitt.image) {
-                    let getObjectParams = {
-                        Bucket: bucketName,
-                        Key: twitt.image
-                    }
-                    let command = new GetObjectCommand(getObjectParams);
-                    let url = await getSignedUrl(s3, command, { expiresIn: 1800 }); //30 min
+                    let url = await handleGetCommand(twitt.image);
                     twitt.image_url = url; 
                 }
             };
