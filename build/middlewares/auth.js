@@ -36,14 +36,14 @@ const verifyToken = (req, res, next) => {
 exports.verifyToken = verifyToken;
 const verifyUserOrAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const compareUser = yield user_1.default.findById(req.user._doc._id);
-        const user = req.user._doc;
-        if (user.isAdmin || compareUser) {
+        if (req.user.isAdmin == 1) {
             return next();
         }
-        else {
+        const compareUser = yield user_1.default.findById(req.user._id);
+        if (!compareUser) {
             return res.status(403).json({ msg: 'No estás autorizado a performar esta acción' });
         }
+        return next();
     }
     catch (error) {
         console.log(error);

@@ -5,11 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const user_1 = __importDefault(require("../controllers/user"));
-const avatarUpload_1 = __importDefault(require("../middlewares/avatarUpload"));
+const imageUpload_1 = __importDefault(require("../middlewares/imageUpload"));
 const auth_1 = require("../middlewares/auth");
 const router = express_1.default.Router();
 router.get('/', auth_1.verifyToken, auth_1.verifyAdmin, user_1.default.allUsers);
-router.post('/register', avatarUpload_1.default.single('avatar'), user_1.default.register);
+router.post('/register', imageUpload_1.default.single('avatar'), user_1.default.register);
 router.post('/login', user_1.default.login);
 router.get('/check-login', user_1.default.checkLogin);
 router.get('/logout', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.logout);

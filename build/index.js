@@ -17,7 +17,6 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 const MONGO_URI = process.env.MONGO_URI;
 app.use('/images', express_1.default.static(path_1.default.join(__dirname, '../')));
-/* app.use('/avatars', express.static(path.join(__dirname, '../'))); */
 app.use((0, express_session_1.default)({
     secret: "Global session",
     resave: false,

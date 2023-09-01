@@ -13,10 +13,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const user_1 = __importDefault(require("../database/models/user"));
-const mongoose_1 = require("mongoose");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const mongoose_1 = require("mongoose");
+const s3ConfigCommands_1 = require("../utils/s3ConfigCommands");
 dotenv_1.default.config();
 const controller = {
     allUsers: (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -25,6 +26,7 @@ const controller = {
                 .find()
                 .select('-_id -password -email');
             const users = usersResponse.map((user) => ({
+                _id: user._id,
                 username: user.username,
                 email: user.email,
                 avatar: user.avatar,
@@ -54,6 +56,7 @@ const controller = {
             }
             const userFound = userToFind;
             const oneUser = {
+                _id: userFound._id,
                 username: userFound.username,
                 email: userFound.email,
                 avatar: userFound.avatar,
@@ -106,6 +109,7 @@ const controller = {
                 return res.status(404).json({ msg: 'Credenciales invalidas' });
             }
             const userVerified = {
+                _id: verifyEmail._id,
                 username: verifyEmail.username,
                 email: verifyEmail.email,
                 avatar: verifyEmail.avatar,
@@ -142,20 +146,23 @@ const controller = {
                 return res.status(409).json({ msg: 'Nombre de usuario ya en uso' });
             }
             const hashPassword = yield bcryptjs_1.default.hash(password, 10);
+            let randomName = null;
+            if (avatar) {
+                randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(avatar);
+            }
             const newUserData = {
                 email,
                 username,
                 password: hashPassword,
-                isAdmin: 0
+                isAdmin: 0,
+                avatar: avatar ? randomName : null
             };
-            if (avatar) {
-                newUserData.avatar = avatar.path;
-            }
             const newUser = yield user_1.default.create(newUserData);
             const userCreated = {
+                _id: newUser._id,
                 username: newUser.username,
                 email: newUser.email,
-                avatar: newUser.avatar ? newUser.avatar : '',
+                avatar: newUser.avatar,
                 isAdmin: newUser.isAdmin,
                 favourites: [],
                 twitts: [],
@@ -191,11 +198,24 @@ const controller = {
             }
             else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
+                const bodyAvatar = req.file;
+                let randomName = null;
+                if (user.avatar && bodyAvatar) {
+                    yield (0, s3ConfigCommands_1.handleDeleteCommand)(user.avatar);
+                    randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(bodyAvatar);
+                }
+                else if (!user.avatar && bodyAvatar) {
+                    randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(bodyAvatar);
+                }
+                else if (!user.avatar && !bodyAvatar) {
+                    yield (0, s3ConfigCommands_1.handleDeleteCommand)(user.avatar);
+                }
                 const dataToUpdate = {
                     username: req.body.username ? req.body.username : user.username,
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
-                    isAdmin: 0
+                    isAdmin: 0,
+                    avatar: randomName ? randomName : null
                 };
                 if (req.file) {
                     dataToUpdate.avatar = req.file.filename;

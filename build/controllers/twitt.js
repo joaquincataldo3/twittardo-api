@@ -14,7 +14,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const twitt_1 = __importDefault(require("../database/models/twitt"));
 const user_1 = __importDefault(require("../database/models/user"));
+const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = require("mongoose");
+const client_s3_1 = require("@aws-sdk/client-s3");
+const s3ConfigCommands_1 = require("../utils/s3ConfigCommands");
+const randomImageName_1 = require("../utils/randomImageName");
+const s3ConfigCommands_2 = require("../utils/s3ConfigCommands");
+dotenv_1.default.config();
+const bucketName = process.env.BUCKET_NAME;
+const s3 = new client_s3_1.S3Client(s3ConfigCommands_1.s3Config);
 const controller = {
     allTwitts: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
@@ -39,13 +47,21 @@ const controller = {
             }
             const twitts = twittsResponse.map((twitt) => ({
                 twitt: twitt.twitt,
-                image: twitt.image,
                 user: twitt.user,
+                image: twitt.image,
                 comments: twitt.comments,
                 favourites: twitt.favourites,
                 commentsNumber: twitt.commentsNumber,
-                // Aquí debes agregar las propiedades pobladas de user y comments
             }));
+            // aca voy por cada imagen y hago un getobjectcommand para obtener el url
+            for (let i = 0; i < twitts.length; i++) {
+                let twitt = twitts[i];
+                if (twitt.image) {
+                    let url = yield (0, s3ConfigCommands_2.handleGetCommand)(twitt.image);
+                    twitt.image_url = url;
+                }
+            }
+            ;
             return res.status(200).json(twitts);
         }
         catch (error) {
@@ -115,18 +131,33 @@ const controller = {
     createTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const userId = req.params.userId;
+            const twittImage = req.file;
             if (!(0, mongoose_1.isValidObjectId)(userId)) {
                 return res.status(400).json({ msg: 'Id de usuario invalido' });
+            }
+            let randomName = null;
+            if (twittImage) {
+                // armamos el objeto que tiene que tener estos parametros para el bucket
+                const bucketParams = {
+                    Bucket: bucketName,
+                    Key: (0, randomImageName_1.randomImageName)(),
+                    Body: twittImage.buffer,
+                    ContentType: twittImage.mimetype
+                };
+                randomName = bucketParams.Key;
+                // instanciamos la clase de put object comand con los params
+                const command = new client_s3_1.PutObjectCommand(bucketParams);
+                // enviamos
+                yield s3.send(command);
             }
             const twittData = {
                 twitt: req.body.twitt,
                 favourites: 0,
                 commentsNumber: 0,
-                user: userId
+                user: userId,
+                image: randomName != null ? randomName : null,
+                image_url: null
             };
-            if (req.file) {
-                twittData.image = req.file.path;
-            }
             const newTwitt = yield twitt_1.default.create(twittData);
             yield user_1.default.findByIdAndUpdate(userId, {
                 $addToSet: {
