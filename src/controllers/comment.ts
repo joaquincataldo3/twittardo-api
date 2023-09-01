@@ -55,7 +55,7 @@ const controller = {
     deleteComment: async (req: Request, res: Response) => {
 
         try {
-            const commentIdToDelete = req.params.commentId
+            const commentIdToDelete: string = req.params.commentId
 
             if(!isValidObjectId(commentIdToDelete)){
                 res.status(400).json({msg: 'Comentario id invalido'})
