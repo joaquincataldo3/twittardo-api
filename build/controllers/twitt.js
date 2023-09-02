@@ -49,10 +49,11 @@ const controller = {
                 commentsNumber: twitt.commentsNumber,
             }));
             // aca voy por cada imagen y hago un getobjectcommand para obtener el url
+            const folder = 'twitts';
             for (let i = 0; i < twitts.length; i++) {
                 let twitt = twitts[i];
                 if (twitt.image) {
-                    let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twitt.image);
+                    let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twitt.image, folder);
                     twitt.image_url = url;
                 }
             }
@@ -131,8 +132,9 @@ const controller = {
                 return res.status(400).json({ msg: 'Id de usuario invalido' });
             }
             let randomName = null;
+            const folder = 'twitts';
             if (twittImage) {
-                randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(twittImage);
+                randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(twittImage, folder);
             }
             const twittData = {
                 twitt: req.body.twitt,

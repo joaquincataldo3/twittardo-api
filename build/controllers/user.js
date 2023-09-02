@@ -36,6 +36,16 @@ const controller = {
                 followers: user.followers,
                 following: user.following
             }));
+            // aca voy por cada imagen y hago un getobjectcommand para obtener el url
+            const folder = 'avatars';
+            for (let i = 0; i < users.length; i++) {
+                let user = users[i];
+                if (user.avatar) {
+                    let url = yield (0, s3ConfigCommands_1.handleGetCommand)(user.avatar, folder);
+                    user.avatar_url = url;
+                }
+            }
+            ;
             return res.status(200).json(users);
         }
         catch (error) {
@@ -147,8 +157,9 @@ const controller = {
             }
             const hashPassword = yield bcryptjs_1.default.hash(password, 10);
             let randomName = null;
+            const folder = 'avatars';
             if (avatar) {
-                randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(avatar);
+                randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(avatar, folder);
             }
             const newUserData = {
                 email,
@@ -190,25 +201,26 @@ const controller = {
         try {
             const userId = req.params.userId;
             if (!(0, mongoose_1.isValidObjectId)(userId)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' });
+                return res.status(400).json({ msg: 'Id de usuario invalido' });
             }
             const userToFind = yield user_1.default.findById(userId);
             if (!userToFind) {
-                res.status(404).json({ msg: 'Usuario no encontrado' });
+                return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
             else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
                 const bodyAvatar = req.file;
                 let randomName = null;
+                let folder = 'avatars';
                 if (user.avatar && bodyAvatar) {
-                    yield (0, s3ConfigCommands_1.handleDeleteCommand)(user.avatar);
-                    randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(bodyAvatar);
+                    yield (0, s3ConfigCommands_1.handleDeleteCommand)(user.avatar, folder);
+                    randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(bodyAvatar, folder);
                 }
                 else if (!user.avatar && bodyAvatar) {
-                    randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(bodyAvatar);
+                    randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(bodyAvatar, folder);
                 }
                 else if (!user.avatar && !bodyAvatar) {
-                    yield (0, s3ConfigCommands_1.handleDeleteCommand)(user.avatar);
+                    yield (0, s3ConfigCommands_1.handleDeleteCommand)(user.avatar, folder);
                 }
                 const dataToUpdate = {
                     username: req.body.username ? req.body.username : user.username,
@@ -217,16 +229,13 @@ const controller = {
                     isAdmin: 0,
                     avatar: randomName ? randomName : null
                 };
-                if (req.file) {
-                    dataToUpdate.avatar = req.file.filename;
-                }
                 const updatedUser = yield user_1.default.findByIdAndUpdate(userId, dataToUpdate, { new: true });
-                res.status(200).json(updatedUser);
+                return res.status(200).json(updatedUser);
             }
         }
         catch (error) {
             console.log(error);
-            res.status(400).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` });
+            return res.status(400).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` });
         }
     }),
     convertUserToAdmin: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -260,14 +269,21 @@ const controller = {
         try {
             const userId = req.params.userId;
             if (!(0, mongoose_1.isValidObjectId)(userId)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' });
+                return res.status(400).json({ msg: 'Id de usuario invalido' });
             }
-            yield user_1.default.findByIdAndRemove(userId);
-            res.status(200).json(userId);
+            const userToDelete = yield user_1.default.findByIdAndRemove(userId);
+            if (userToDelete == null) {
+                return res.status(404).json({ msg: 'Usuario no encontrado' });
+            }
+            if (userToDelete.avatar) {
+                const folder = 'avatars';
+                yield (0, s3ConfigCommands_1.handleDeleteCommand)(userToDelete.avatar, folder);
+            }
+            return res.status(200).json(userId);
         }
         catch (error) {
             console.log(error);
-            res.status(400).json({ msg: `Problema mientras se eliminaba el usuario: ${error}` });
+            return res.status(400).json({ msg: `Problema mientras se eliminaba el usuario: ${error}` });
         }
     }),
     logout: (_req, res) => {

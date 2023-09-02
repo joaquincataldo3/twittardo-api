@@ -32,10 +32,10 @@ exports.s3Config = {
 const s3 = new client_s3_1.S3Client(exports.s3Config);
 let randomName = null;
 // armamos el objeto que tiene que tener estos parametros para el bucket
-const handlePutCommand = (avatar) => __awaiter(void 0, void 0, void 0, function* () {
+const handlePutCommand = (avatar, folder) => __awaiter(void 0, void 0, void 0, function* () {
     const bucketParams = {
         Bucket: bucketName,
-        Key: (0, randomImageName_1.randomImageName)(),
+        Key: `${folder}/${(0, randomImageName_1.randomImageName)()}`,
         Body: avatar.buffer,
         ContentType: avatar.mimetype
     };
@@ -48,20 +48,20 @@ const handlePutCommand = (avatar) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.handlePutCommand = handlePutCommand;
 // en este caso recibe el string de avatar que es el randomname
-const handleDeleteCommand = (avatar) => __awaiter(void 0, void 0, void 0, function* () {
+const handleDeleteCommand = (avatar, folder) => __awaiter(void 0, void 0, void 0, function* () {
     const deleteParams = {
         Bucket: bucketName,
-        Key: avatar
+        Key: `${folder}/${avatar}`
     };
     const delCommand = new client_s3_1.DeleteObjectCommand(deleteParams);
     yield s3.send(delCommand);
 });
 exports.handleDeleteCommand = handleDeleteCommand;
 // para obtener la url temporal
-const handleGetCommand = (image) => __awaiter(void 0, void 0, void 0, function* () {
+const handleGetCommand = (image, folder) => __awaiter(void 0, void 0, void 0, function* () {
     let getObjectParams = {
         Bucket: bucketName,
-        Key: image
+        Key: `${folder}/${image}`
     };
     let command = new client_s3_1.GetObjectCommand(getObjectParams);
     let url = yield (0, s3_request_presigner_1.getSignedUrl)(s3, command, { expiresIn: 1800 }); //30 min
