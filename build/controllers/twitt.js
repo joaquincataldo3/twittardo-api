@@ -16,13 +16,8 @@ const twitt_1 = __importDefault(require("../database/models/twitt"));
 const user_1 = __importDefault(require("../database/models/user"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = require("mongoose");
-const client_s3_1 = require("@aws-sdk/client-s3");
 const s3ConfigCommands_1 = require("../utils/s3ConfigCommands");
-const randomImageName_1 = require("../utils/randomImageName");
-const s3ConfigCommands_2 = require("../utils/s3ConfigCommands");
 dotenv_1.default.config();
-const bucketName = process.env.BUCKET_NAME;
-const s3 = new client_s3_1.S3Client(s3ConfigCommands_1.s3Config);
 const controller = {
     allTwitts: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
@@ -39,11 +34,11 @@ const controller = {
                 .populate('comments');
             // two awaits bc we are populating comments and then user inside comments
             if (twittsResponse) {
-                yield Promise.all(twittsResponse.map((twitt) => __awaiter(void 0, void 0, void 0, function* () {
+                for (let twitt of twittsResponse) {
                     if (twitt.comments.length > 0) {
                         yield twitt.populate('comments.user');
                     }
-                })));
+                }
             }
             const twitts = twittsResponse.map((twitt) => ({
                 twitt: twitt.twitt,
@@ -57,7 +52,7 @@ const controller = {
             for (let i = 0; i < twitts.length; i++) {
                 let twitt = twitts[i];
                 if (twitt.image) {
-                    let url = yield (0, s3ConfigCommands_2.handleGetCommand)(twitt.image);
+                    let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twitt.image);
                     twitt.image_url = url;
                 }
             }
@@ -137,18 +132,7 @@ const controller = {
             }
             let randomName = null;
             if (twittImage) {
-                // armamos el objeto que tiene que tener estos parametros para el bucket
-                const bucketParams = {
-                    Bucket: bucketName,
-                    Key: (0, randomImageName_1.randomImageName)(),
-                    Body: twittImage.buffer,
-                    ContentType: twittImage.mimetype
-                };
-                randomName = bucketParams.Key;
-                // instanciamos la clase de put object comand con los params
-                const command = new client_s3_1.PutObjectCommand(bucketParams);
-                // enviamos
-                yield s3.send(command);
+                randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(twittImage);
             }
             const twittData = {
                 twitt: req.body.twitt,
