@@ -4,16 +4,9 @@ import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
 import { TwittT, TwittTPopulated } from '../types';
-import { S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
-import { s3Config } from '../utils/s3ConfigCommands';
-import { randomImageName } from '../utils/randomImageName';
-import { handleGetCommand } from '../utils/s3ConfigCommands';
-
+import { handlePutCommand, handleGetCommand } from '../utils/s3ConfigCommands';
 
 dotenv.config()
-const bucketName = process.env.BUCKET_NAME;
-
-const s3 = new S3Client(s3Config);
 
 const controller = {
     allTwitts: async (req: Request, res: Response) => {
@@ -31,11 +24,11 @@ const controller = {
                 .populate('comments')
             // two awaits bc we are populating comments and then user inside comments
             if (twittsResponse) {
-                await Promise.all(twittsResponse.map(async (twitt: any) => {
+                for (let twitt of twittsResponse) {
                     if (twitt.comments.length > 0) {
                         await twitt.populate('comments.user');
                     }
-                }));
+                }
             }
             const twitts: TwittTPopulated[] = twittsResponse.map((twitt: any) => ({
                 twitt: twitt.twitt,
@@ -137,18 +130,7 @@ const controller = {
 
             let randomName = null;
             if (twittImage) {
-                // armamos el objeto que tiene que tener estos parametros para el bucket
-                const bucketParams = {
-                    Bucket: bucketName,
-                    Key: randomImageName(),
-                    Body: twittImage.buffer,
-                    ContentType: twittImage.mimetype
-                };
-                randomName = bucketParams.Key;
-                // instanciamos la clase de put object comand con los params
-                const command = new PutObjectCommand(bucketParams);
-                // enviamos
-                await s3.send(command)
+               randomName = await handlePutCommand(twittImage);
             }
 
             const twittData: TwittT = {
