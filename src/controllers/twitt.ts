@@ -39,10 +39,11 @@ const controller = {
                 commentsNumber: twitt.commentsNumber,
             }));
             // aca voy por cada imagen y hago un getobjectcommand para obtener el url
+            const folder = 'twitts';
             for (let i = 0; i < twitts.length; i++) {
                 let twitt = twitts[i];
                 if (twitt.image) {
-                    let url = await handleGetCommand(twitt.image);
+                    let url = await handleGetCommand(twitt.image, folder);
                     twitt.image_url = url; 
                 }
             };
@@ -129,8 +130,9 @@ const controller = {
             }
 
             let randomName = null;
+            const folder = 'twitts'
             if (twittImage) {
-               randomName = await handlePutCommand(twittImage);
+               randomName = await handlePutCommand(twittImage, folder);
             }
 
             const twittData: TwittT = {

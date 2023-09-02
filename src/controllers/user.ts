@@ -6,7 +6,7 @@ import dotenv from 'dotenv'
 import { LoginUser, RegisterUser, UserT, UserToFront } from '../types'
 import { isValidObjectId } from 'mongoose'
 import { Request, Response } from 'express'
-import { handlePutCommand, handleDeleteCommand } from '../utils/s3ConfigCommands'
+import { handlePutCommand, handleDeleteCommand, handleGetCommand } from '../utils/s3ConfigCommands'
 
 dotenv.config()
 
@@ -27,6 +27,15 @@ const controller = {
                 followers: user.followers,
                 following: user.following
             }));
+            // aca voy por cada imagen y hago un getobjectcommand para obtener el url
+            const folder = 'avatars';
+            for (let i = 0; i < users.length; i++) {
+                let user = users[i];
+                if (user.avatar) {
+                    let url = await handleGetCommand(user.avatar, folder);
+                    user.avatar_url = url;
+                }
+            };
             return res.status(200).json(users)
         } catch (error) {
             return res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` })
@@ -108,7 +117,7 @@ const controller = {
             }
 
             const verifyEmail = await User.findOne({ email })
-            
+
             if (!verifyEmail) {
                 return res.status(404).json({ msg: 'Credenciales invalidas' })
             } // user could be null
@@ -143,7 +152,7 @@ const controller = {
     }),
     register: (async (req: Request, res: Response) => {
         try {
-            const {email, username, password}: RegisterUser = req.body
+            const { email, username, password }: RegisterUser = req.body
             const avatar = req.file as Express.Multer.File
 
             if (!email || !username || !password) {
@@ -165,9 +174,9 @@ const controller = {
             const hashPassword = await bcrypt.hash(password, 10)
 
             let randomName = null;
-
-            if(avatar){
-                randomName = await handlePutCommand(avatar);
+            const folder = 'avatars';
+            if (avatar) {
+                randomName = await handlePutCommand(avatar, folder);
             }
 
             const newUserData: UserT = {
@@ -213,25 +222,26 @@ const controller = {
             const userId: string = req.params.userId;
 
             if (!isValidObjectId(userId)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' })
+                return res.status(400).json({ msg: 'Id de usuario invalido' })
             }
 
             const userToFind = await User.findById(userId)
 
             if (!userToFind) {
-                res.status(404).json({ msg: 'Usuario no encontrado' })
+                return res.status(404).json({ msg: 'Usuario no encontrado' })
             } else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
                 const bodyAvatar = req.file;
 
                 let randomName = null;
-                if(user.avatar && bodyAvatar){
-                    await handleDeleteCommand(user.avatar);
-                    randomName = await handlePutCommand(bodyAvatar);
-                } else if(!user.avatar && bodyAvatar ){
-                    randomName = await handlePutCommand(bodyAvatar);
-                } else if(!user.avatar && !bodyAvatar){
-                    await handleDeleteCommand(user.avatar);
+                let folder = 'avatars';
+                if (user.avatar && bodyAvatar) {
+                    await handleDeleteCommand(user.avatar, folder);
+                    randomName = await handlePutCommand(bodyAvatar, folder);
+                } else if (!user.avatar && bodyAvatar) {
+                    randomName = await handlePutCommand(bodyAvatar, folder);
+                } else if (!user.avatar && !bodyAvatar) {
+                    await handleDeleteCommand(user.avatar, folder);
                 }
 
                 const dataToUpdate: UserT = {
@@ -242,19 +252,15 @@ const controller = {
                     avatar: randomName ? randomName : null
                 }
 
-                if (req.file) {
-                    dataToUpdate.avatar = req.file.filename
-                }
-
                 const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })
 
-                res.status(200).json(updatedUser)
+                return res.status(200).json(updatedUser)
             }
 
 
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
+            return res.status(400).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
         }
     },
     convertUserToAdmin: async (req: Request, res: Response) => {
@@ -294,16 +300,25 @@ const controller = {
             const userId: string = req.params.userId
 
             if (!isValidObjectId(userId)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' })
+                return res.status(400).json({ msg: 'Id de usuario invalido' });
             }
 
-            await User.findByIdAndRemove(userId)
+            const userToDelete = await User.findByIdAndRemove(userId);
 
-            res.status(200).json(userId)
+            if (userToDelete == null) {
+                return res.status(404).json({ msg: 'Usuario no encontrado' });
+            }
+
+            if (userToDelete.avatar) {
+                const folder = 'avatars';
+                await handleDeleteCommand(userToDelete.avatar, folder);
+            }
+
+            return res.status(200).json(userId)
 
         } catch (error) {
             console.log(error)
-            res.status(400).json({ msg: `Problema mientras se eliminaba el usuario: ${error}` })
+            return res.status(400).json({ msg: `Problema mientras se eliminaba el usuario: ${error}` })
         }
 
     },

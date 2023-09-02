@@ -21,10 +21,10 @@ export const s3Config: S3ClientConfig = {
 const s3 = new S3Client(s3Config);
 let randomName = null;
 // armamos el objeto que tiene que tener estos parametros para el bucket
-export const handlePutCommand = async (avatar: Express.Multer.File) => {
+export const handlePutCommand = async (avatar: Express.Multer.File, folder: string) => {
   const bucketParams = {
     Bucket: bucketName,
-    Key: randomImageName(),
+    Key: `${folder}/${randomImageName()}`,
     Body: avatar.buffer,
     ContentType: avatar.mimetype
   };
@@ -37,20 +37,20 @@ export const handlePutCommand = async (avatar: Express.Multer.File) => {
 }
 
 // en este caso recibe el string de avatar que es el randomname
-export const handleDeleteCommand = async (avatar: string) => {
+export const handleDeleteCommand = async (avatar: string, folder: string) => {
   const deleteParams = {
     Bucket: bucketName,
-    Key: avatar
+    Key: `${folder}/${avatar}`
   };
   const delCommand = new DeleteObjectCommand(deleteParams);
   await s3.send(delCommand);
 }
 
 // para obtener la url temporal
-export const handleGetCommand = async (image: string) => {
+export const handleGetCommand = async (image: string, folder: string) => {
   let getObjectParams = {
     Bucket: bucketName,
-    Key: image
+    Key: `${folder}/${image}`
   }
   let command = new GetObjectCommand(getObjectParams);
   let url = await getSignedUrl(s3, command, { expiresIn: 1800 }); //30 min
