@@ -5,7 +5,7 @@ export interface UserT {
     username: string,
     password: string,
     isAdmin: number,
-    avatar?: string | null,
+    avatar: string,
     favourites?: TwittT[] | [],
     twitts?: TwittT[] | [],
     followers?: UserToFront[] | [],
@@ -16,7 +16,7 @@ export interface UserToFront {
     _id: string,
     username: string,
     email: string,
-    avatar?: string | null,
+    avatar: string,
     avatar_url?: string | null
     isAdmin: number,
     favourites: TwittT[] | [],

@@ -31,10 +31,9 @@ const controller = {
             const folder = 'avatars';
             for (let i = 0; i < users.length; i++) {
                 let user = users[i];
-                if (user.avatar) {
-                    let url = await handleGetCommand(user.avatar, folder);
-                    user.avatar_url = url;
-                }
+                let url = await handleGetCommand(user.avatar, folder);
+                user.avatar_url = url;
+
             };
             return res.status(200).json(users)
         } catch (error) {
@@ -137,6 +136,9 @@ const controller = {
                 followers: verifyEmail.followers,
                 following: verifyEmail.following
             }
+            const folder = "users";
+            let imageUrl = await handleGetCommand(userToVerify.avatar, folder);
+            userVerified.avatar_url = imageUrl;
             const token = jwt.sign({ ...userVerified }, secretKey)
             res.cookie('user_access_token', token, {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
@@ -177,6 +179,9 @@ const controller = {
             const folder = 'avatars';
             if (avatar) {
                 randomName = await handlePutCommand(avatar, folder);
+            } else {
+                const defAvatar = 'default_avatar.jpg';
+                randomName = await handlePutCommand(defAvatar, folder);
             }
 
             const newUserData: UserT = {
@@ -184,7 +189,7 @@ const controller = {
                 username,
                 password: hashPassword,
                 isAdmin: 0,
-                avatar: avatar ? randomName : null
+                avatar: randomName
             }
 
             const newUser = await User.create(newUserData)
@@ -233,15 +238,17 @@ const controller = {
                 const user = userToFind;
                 const bodyAvatar = req.file;
 
-                let randomName = null;
+                let randomName: string;
                 let folder = 'avatars';
                 if (user.avatar && bodyAvatar) {
                     await handleDeleteCommand(user.avatar, folder);
                     randomName = await handlePutCommand(bodyAvatar, folder);
                 } else if (!user.avatar && bodyAvatar) {
                     randomName = await handlePutCommand(bodyAvatar, folder);
-                } else if (!user.avatar && !bodyAvatar) {
+                } else {
+                    const defAvatar = 'default_avatar.jpg';
                     await handleDeleteCommand(user.avatar, folder);
+                    randomName = await handlePutCommand(defAvatar, folder)
                 }
 
                 const dataToUpdate: UserT = {
@@ -249,7 +256,7 @@ const controller = {
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
                     isAdmin: 0,
-                    avatar: randomName ? randomName : null
+                    avatar: randomName
                 }
 
                 const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })

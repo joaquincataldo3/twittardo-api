@@ -1,10 +1,10 @@
 import express from 'express'
 import userController from '../controllers/user'
 import imageUpload from '../middlewares/imageUpload'
-import { verifyAdmin, verifyToken, verifyUserOrAdmin } from '../middlewares/auth'
+import {/*  verifyAdmin, */ verifyToken, verifyUserOrAdmin } from '../middlewares/auth'
 
 const router = express.Router()
-router.get('/', verifyToken, verifyAdmin, userController.allUsers)
+router.get('/', /* verifyToken, verifyAdmin, */ userController.allUsers)
 router.post('/register', imageUpload.single('avatar'), userController.register)
 router.post('/login', userController.login)
 router.get('/check-login', userController.checkLogin)

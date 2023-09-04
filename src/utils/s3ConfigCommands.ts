@@ -1,35 +1,49 @@
 import dotenv from 'dotenv';
-import { S3ClientConfig, S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand} from "@aws-sdk/client-s3";
+import { S3ClientConfig, S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { randomImageName } from "./randomImageName";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 dotenv.config()
 
 const bucketRegion = process.env.BUCKET_REGION;
-const accessKey = process.env.ACCESS_KEY;
-const secretAccessKey = process.env.SECRET_ACCESS_KEY;
+const accessKeyId = process.env.ACCESS_KEY!;
+const secretAccessKey = process.env.SECRET_ACCESS_KEY!;
 const bucketName = process.env.BUCKET_NAME;
 
-export const s3Config: S3ClientConfig = {
+
+const s3Config: S3ClientConfig = {
   credentials: {
-    accessKeyId: accessKey!,
-    secretAccessKey: secretAccessKey!,
+    accessKeyId,
+    secretAccessKey
   },
   region: bucketRegion,
 };
 
+
 const s3 = new S3Client(s3Config);
-let randomName = null;
+
 // armamos el objeto que tiene que tener estos parametros para el bucket
-export const handlePutCommand = async (avatar: Express.Multer.File, folder: string) => {
-  const bucketParams = {
-    Bucket: bucketName,
-    Key: `${folder}/${randomImageName()}`,
-    Body: avatar.buffer,
-    ContentType: avatar.mimetype
-  };
-  randomName = bucketParams.Key;
-  // instanciamos la clase de put object comand con los params
+export const handlePutCommand = async (avatar: Express.Multer.File | string, folder: string) => {
+  let bucketParams;
+  let randomName: string;
+  // evualamos si es un file o un string
+  if (typeof avatar === 'string') {
+    randomName = avatar;
+    bucketParams = {
+      Bucket: bucketName,
+      Key: `${folder}/${randomName}`,
+      ContentType: 'image/jpg'
+    };
+  } else {
+    randomName = randomImageName(avatar);
+    bucketParams = {
+      Bucket: bucketName,
+      Key: `${folder}/${randomName}`,
+      Body: avatar.buffer,
+      ContentType: avatar.mimetype,
+    };
+    // instanciamos la clase de put object comand con los params
+  }
   const command = new PutObjectCommand(bucketParams);
   // enviamos
   await s3.send(command)
