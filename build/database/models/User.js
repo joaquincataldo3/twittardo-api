@@ -21,6 +21,9 @@ const userSchema = new mongoose_2.Schema({
     avatar: {
         type: String,
     },
+    image_url: {
+        type: String
+    },
     isAdmin: {
         type: Number
     },

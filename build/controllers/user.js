@@ -30,6 +30,7 @@ const controller = {
                 username: user.username,
                 email: user.email,
                 avatar: user.avatar,
+                image_url: user.image_url,
                 isAdmin: user.isAdmin,
                 favourites: user.favourites,
                 twitts: user.twitts,
@@ -41,7 +42,7 @@ const controller = {
             for (let i = 0; i < users.length; i++) {
                 let user = users[i];
                 let url = yield (0, s3ConfigCommands_1.handleGetCommand)(user.avatar, folder);
-                user.avatar_url = url;
+                user.image_url = url;
             }
             ;
             return res.status(200).json(users);
@@ -63,7 +64,7 @@ const controller = {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
             const userFound = userToFind;
-            const oneUser = {
+            let oneUser = {
                 _id: userFound._id,
                 username: userFound.username,
                 email: userFound.email,
@@ -72,8 +73,12 @@ const controller = {
                 favourites: userFound.favourites,
                 twitts: userFound.twitts,
                 followers: userFound.followers,
-                following: userFound.following
+                following: userFound.following,
+                image_url: '',
             };
+            const folder = 'avatars';
+            let url = yield (0, s3ConfigCommands_1.handleGetCommand)(oneUser.avatar, folder);
+            oneUser.image_url = url;
             return res.status(200).json(oneUser);
         }
         catch (error) {
@@ -116,7 +121,7 @@ const controller = {
             if (!verifyPassword) {
                 return res.status(404).json({ msg: 'Credenciales invalidas' });
             }
-            const userVerified = {
+            let userVerified = {
                 _id: verifyEmail._id,
                 username: verifyEmail.username,
                 email: verifyEmail.email,
@@ -125,11 +130,12 @@ const controller = {
                 favourites: verifyEmail.favourites,
                 twitts: verifyEmail.twitts,
                 followers: verifyEmail.followers,
-                following: verifyEmail.following
+                following: verifyEmail.following,
+                image_url: ''
             };
             const folder = "users";
             let imageUrl = yield (0, s3ConfigCommands_1.handleGetCommand)(userToVerify.avatar, folder);
-            userVerified.avatar_url = imageUrl;
+            userVerified.image_url = imageUrl;
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
             res.cookie('user_access_token', token, {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
@@ -163,29 +169,18 @@ const controller = {
                 randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(avatar, folder);
             }
             else {
-                const defAvatar = 'default_avatar.jpg';
-                randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(defAvatar, folder);
+                randomName = 'default_avatar.jpg';
             }
-            const newUserData = {
+            let newUserData = {
                 email,
                 username,
                 password: hashPassword,
                 isAdmin: 0,
-                avatar: randomName
+                avatar: randomName,
+                image_url: ''
             };
-            const newUser = yield user_1.default.create(newUserData);
-            const userCreated = {
-                _id: newUser._id,
-                username: newUser.username,
-                email: newUser.email,
-                avatar: newUser.avatar,
-                isAdmin: newUser.isAdmin,
-                favourites: [],
-                twitts: [],
-                followers: [],
-                following: []
-            };
-            return res.status(201).json(userCreated);
+            let newUser = yield user_1.default.create(newUserData);
+            return res.status(201).json(newUser);
         }
         catch (error) {
             return res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` });
@@ -234,7 +229,8 @@ const controller = {
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
                     isAdmin: 0,
-                    avatar: randomName
+                    avatar: randomName,
+                    image_url: ''
                 };
                 const updatedUser = yield user_1.default.findByIdAndUpdate(userId, dataToUpdate, { new: true });
                 return res.status(200).json(updatedUser);

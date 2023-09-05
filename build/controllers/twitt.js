@@ -40,24 +40,33 @@ const controller = {
                     }
                 }
             }
-            const twitts = twittsResponse.map((twitt) => ({
-                twitt: twitt.twitt,
-                user: twitt.user,
-                image: twitt.image,
-                comments: twitt.comments,
-                favourites: twitt.favourites,
-                commentsNumber: twitt.commentsNumber,
-            }));
             // aca voy por cada imagen y hago un getobjectcommand para obtener el url
-            const folder = 'twitts';
-            for (let i = 0; i < twitts.length; i++) {
-                let twitt = twitts[i];
+            let folder = 'twitts';
+            for (let i = 0; i < twittsResponse.length; i++) {
+                let twitt = twittsResponse[i];
                 if (twitt.image) {
                     let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twitt.image, folder);
                     twitt.image_url = url;
                 }
             }
             ;
+            // voy por cada imagen del usuario
+            folder = 'avatars';
+            for (let i = 0; i < twittsResponse.length; i++) {
+                let twitt = twittsResponse[i];
+                let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twitt.user.avatar, folder);
+                twitt.user.image_url = url;
+            }
+            ;
+            const twitts = twittsResponse.map((twitt) => ({
+                twitt: twitt.twitt,
+                user: twitt.user,
+                image: twitt.image,
+                image_url: twitt.image_url,
+                comments: twitt.comments,
+                favourites: twitt.favourites,
+                commentsNumber: twitt.commentsNumber,
+            }));
             return res.status(200).json(twitts);
         }
         catch (error) {
