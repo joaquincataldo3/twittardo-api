@@ -144,10 +144,12 @@ const controller = {
             const folder = "users";
             let imageUrl = await handleGetCommand(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
-            const token = jwt.sign({ ...userVerified }, secretKey)
+            const token = jwt.sign({ ...userVerified }, secretKey);    
             res.cookie('user_access_token', token, {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
             })
+            req.session.userLogged = userVerified;
+            console.log(req.session)
 
             return res.status(200).json({ userVerified, token })
 

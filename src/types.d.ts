@@ -1,5 +1,12 @@
 import { Model, Document } from 'mongoose'
 
+// Extiende el tipo SessionData para incluir userLoggedId
+declare module 'express-session' {
+    interface SessionData {
+      userLogged: {}; // Asegúrate de que coincida con el tipo correcto
+    }
+  }
+
 export interface UserT {
     _id?: string,
     email: string,

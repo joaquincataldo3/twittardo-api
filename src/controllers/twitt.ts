@@ -11,13 +11,13 @@ dotenv.config()
 const controller = {
     allTwitts: async (req: Request, res: Response) => {
         try {
-            const pages: string = String(req.query.p);
-            const pagesNumber: number = Number(pages)
+            const page: string = String(req.query.p);
+            const pageNumber: number = Number(page)
             const twittPerPage: number = 5;
             const twittsResponse = await Twitt
                 .find()
                 .sort({ createdAt: -1 })
-                .skip(pagesNumber * twittPerPage)
+                .skip(twittPerPage * pageNumber)
                 .limit(twittPerPage)
                 .select('-password -email')
                 .populate('user', '-password -email')

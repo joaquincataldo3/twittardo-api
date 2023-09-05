@@ -12,12 +12,13 @@ import session from 'express-session'
 dotenv.config()
 
 const app = express()
-const MONGO_URI = process.env.MONGO_URI
+const MONGO_URI = process.env.MONGO_URI!;
+const SESSION_SECRET = process.env.SESSION_SECRET!;
 
 app.use('/images', express.static(path.join(__dirname, '../')));
 
 app.use(session({ 
-    secret: "Global session",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false
 }));
