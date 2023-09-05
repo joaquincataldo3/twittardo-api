@@ -30,24 +30,31 @@ const controller = {
                     }
                 }
             }
+            // aca voy por cada imagen y hago un getobjectcommand para obtener el url
+            let folder = 'twitts';
+            for (let i = 0; i < twittsResponse.length; i++) {
+                let twitt = twittsResponse[i];
+                if (twitt.image) {
+                    let url = await handleGetCommand(twitt.image, folder);
+                    twitt.image_url = url;
+                }
+            };
+            // voy por cada imagen del usuario
+            folder = 'avatars';
+            for (let i = 0; i < twittsResponse.length; i++) {
+                let twitt = twittsResponse[i];
+                let url = await handleGetCommand(twitt.user.avatar, folder);        
+                twitt.user.image_url = url;
+            };
             const twitts: TwittTPopulated[] = twittsResponse.map((twitt: any) => ({
                 twitt: twitt.twitt,
                 user: twitt.user,
                 image: twitt.image,
+                image_url: twitt.image_url,
                 comments: twitt.comments,
                 favourites: twitt.favourites,
                 commentsNumber: twitt.commentsNumber,
             }));
-            // aca voy por cada imagen y hago un getobjectcommand para obtener el url
-            const folder = 'twitts';
-            for (let i = 0; i < twitts.length; i++) {
-                let twitt = twitts[i];
-                if (twitt.image) {
-                    let url = await handleGetCommand(twitt.image, folder);
-                    twitt.image_url = url; 
-                }
-            };
-
             return res.status(200).json(twitts);
         } catch (error) {
             console.log(error)
@@ -132,7 +139,7 @@ const controller = {
             let randomName = null;
             const folder = 'twitts'
             if (twittImage) {
-               randomName = await handlePutCommand(twittImage, folder);
+                randomName = await handlePutCommand(twittImage, folder);
             }
 
             const twittData: TwittT = {

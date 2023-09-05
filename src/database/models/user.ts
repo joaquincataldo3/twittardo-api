@@ -17,6 +17,9 @@ import { Schema, Types } from "mongoose"
     avatar: {
       type: String,
     },
+    image_url: {
+      type: String
+    },
     isAdmin: {
       type: Number
     },

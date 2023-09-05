@@ -3,7 +3,7 @@ import User from '../database/models/user'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
-import { LoginUser, RegisterUser, UserT, UserToFront } from '../types'
+import { LoginUser, RegisterUser, UserT } from '../types'
 import { isValidObjectId } from 'mongoose'
 import { Request, Response } from 'express'
 import { handlePutCommand, handleDeleteCommand, handleGetCommand } from '../utils/s3ConfigCommands'
@@ -16,11 +16,12 @@ const controller = {
             const usersResponse = await User
                 .find()
                 .select('-_id -password -email')
-            const users: UserToFront[] = usersResponse.map((user: any) => ({
+            const users: UserT[] = usersResponse.map((user: any) => ({
                 _id: user._id,
                 username: user.username,
                 email: user.email,
                 avatar: user.avatar,
+                image_url: user.image_url,
                 isAdmin: user.isAdmin,
                 favourites: user.favourites,
                 twitts: user.twitts,
@@ -32,8 +33,7 @@ const controller = {
             for (let i = 0; i < users.length; i++) {
                 let user = users[i];
                 let url = await handleGetCommand(user.avatar, folder);
-                user.avatar_url = url;
-
+                user.image_url = url;
             };
             return res.status(200).json(users)
         } catch (error) {
@@ -53,7 +53,7 @@ const controller = {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
             const userFound = userToFind
-            const oneUser: UserToFront = {
+            let oneUser: UserT = {
                 _id: userFound._id as string,
                 username: userFound.username,
                 email: userFound.email,
@@ -62,8 +62,12 @@ const controller = {
                 favourites: userFound.favourites,
                 twitts: userFound.twitts,
                 followers: userFound.followers,
-                following: userFound.following
+                following: userFound.following,
+                image_url: '',
             }
+            const folder = 'avatars';
+            let url = await handleGetCommand(oneUser.avatar, folder);
+            oneUser.image_url = url;
             return res.status(200).json(oneUser)
         } catch (error) {
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
@@ -125,7 +129,7 @@ const controller = {
             if (!verifyPassword) {
                 return res.status(404).json({ msg: 'Credenciales invalidas' })
             }
-            const userVerified: UserToFront = {
+            let userVerified: UserT = {
                 _id: verifyEmail._id as string,
                 username: verifyEmail.username,
                 email: verifyEmail.email,
@@ -134,11 +138,12 @@ const controller = {
                 favourites: verifyEmail.favourites,
                 twitts: verifyEmail.twitts,
                 followers: verifyEmail.followers,
-                following: verifyEmail.following
+                following: verifyEmail.following,
+                image_url: ''
             }
             const folder = "users";
             let imageUrl = await handleGetCommand(userToVerify.avatar, folder);
-            userVerified.avatar_url = imageUrl;
+            userVerified.image_url = imageUrl;
             const token = jwt.sign({ ...userVerified }, secretKey)
             res.cookie('user_access_token', token, {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
@@ -180,31 +185,20 @@ const controller = {
             if (avatar) {
                 randomName = await handlePutCommand(avatar, folder);
             } else {
-                const defAvatar = 'default_avatar.jpg';
-                randomName = await handlePutCommand(defAvatar, folder);
+                randomName = 'default_avatar.jpg';
             }
 
-            const newUserData: UserT = {
+            let newUserData: UserT = {
                 email,
                 username,
                 password: hashPassword,
                 isAdmin: 0,
-                avatar: randomName
+                avatar: randomName,
+                image_url: ''
             }
 
-            const newUser = await User.create(newUserData)
-            const userCreated: UserToFront = {
-                _id: newUser._id as string,
-                username: newUser.username,
-                email: newUser.email,
-                avatar: newUser.avatar,
-                isAdmin: newUser.isAdmin,
-                favourites: [],
-                twitts: [],
-                followers: [],
-                following: []
-            }
-            return res.status(201).json(userCreated);
+            let newUser = await User.create(newUserData)
+            return res.status(201).json(newUser);
         } catch (error) {
             return res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
         }
@@ -256,7 +250,8 @@ const controller = {
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
                     isAdmin: 0,
-                    avatar: randomName
+                    avatar: randomName,
+                    image_url: ''
                 }
 
                 const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })

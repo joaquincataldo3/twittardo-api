@@ -1,28 +1,17 @@
 import { Model, Document } from 'mongoose'
 
 export interface UserT {
+    _id?: string,
     email: string,
     username: string,
-    password: string,
+    password?: string,
     isAdmin: number,
     avatar: string,
+    image_url: string,
     favourites?: TwittT[] | [],
     twitts?: TwittT[] | [],
     followers?: UserToFront[] | [],
     following?: UserToFront | []
-}
-
-export interface UserToFront {
-    _id: string,
-    username: string,
-    email: string,
-    avatar: string,
-    avatar_url?: string | null
-    isAdmin: number,
-    favourites: TwittT[] | [],
-    twitts: TwittT[] | [],
-    followers: UserToFront[] | [],
-    following: UserToFront | []
 }
 
 export interface TwittT {
