@@ -6,5 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.randomImageName = void 0;
 const crypto_1 = __importDefault(require("crypto"));
 // creamos una cadena de caracteres de 32 bytes
-const randomImageName = (bytes = 32) => crypto_1.default.randomBytes(bytes).toString('hex');
+const randomImageName = (avatar) => {
+    const bytes = 32;
+    const randomWord = crypto_1.default.randomBytes(bytes).toString('hex');
+    const fileName = randomWord + avatar.originalname;
+    return fileName;
+};
 exports.randomImageName = randomImageName;

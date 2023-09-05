@@ -12,35 +12,47 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleGetCommand = exports.handleDeleteCommand = exports.handlePutCommand = exports.s3Config = void 0;
+exports.handleGetCommand = exports.handleDeleteCommand = exports.handlePutCommand = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 const client_s3_1 = require("@aws-sdk/client-s3");
 const randomImageName_1 = require("./randomImageName");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 dotenv_1.default.config();
 const bucketRegion = process.env.BUCKET_REGION;
-const accessKey = process.env.ACCESS_KEY;
+const accessKeyId = process.env.ACCESS_KEY;
 const secretAccessKey = process.env.SECRET_ACCESS_KEY;
 const bucketName = process.env.BUCKET_NAME;
-exports.s3Config = {
+const s3Config = {
     credentials: {
-        accessKeyId: accessKey,
-        secretAccessKey: secretAccessKey,
+        accessKeyId,
+        secretAccessKey
     },
     region: bucketRegion,
 };
-const s3 = new client_s3_1.S3Client(exports.s3Config);
-let randomName = null;
+const s3 = new client_s3_1.S3Client(s3Config);
 // armamos el objeto que tiene que tener estos parametros para el bucket
 const handlePutCommand = (avatar, folder) => __awaiter(void 0, void 0, void 0, function* () {
-    const bucketParams = {
-        Bucket: bucketName,
-        Key: `${folder}/${(0, randomImageName_1.randomImageName)()}`,
-        Body: avatar.buffer,
-        ContentType: avatar.mimetype
-    };
-    randomName = bucketParams.Key;
-    // instanciamos la clase de put object comand con los params
+    let bucketParams;
+    let randomName;
+    // evualamos si es un file o un string
+    if (typeof avatar === 'string') {
+        randomName = avatar;
+        bucketParams = {
+            Bucket: bucketName,
+            Key: `${folder}/${randomName}`,
+            ContentType: 'image/jpg'
+        };
+    }
+    else {
+        randomName = (0, randomImageName_1.randomImageName)(avatar);
+        bucketParams = {
+            Bucket: bucketName,
+            Key: `${folder}/${randomName}`,
+            Body: avatar.buffer,
+            ContentType: avatar.mimetype,
+        };
+        // instanciamos la clase de put object comand con los params
+    }
     const command = new client_s3_1.PutObjectCommand(bucketParams);
     // enviamos
     yield s3.send(command);

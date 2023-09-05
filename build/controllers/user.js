@@ -40,10 +40,8 @@ const controller = {
             const folder = 'avatars';
             for (let i = 0; i < users.length; i++) {
                 let user = users[i];
-                if (user.avatar) {
-                    let url = yield (0, s3ConfigCommands_1.handleGetCommand)(user.avatar, folder);
-                    user.avatar_url = url;
-                }
+                let url = yield (0, s3ConfigCommands_1.handleGetCommand)(user.avatar, folder);
+                user.avatar_url = url;
             }
             ;
             return res.status(200).json(users);
@@ -129,6 +127,9 @@ const controller = {
                 followers: verifyEmail.followers,
                 following: verifyEmail.following
             };
+            const folder = "users";
+            let imageUrl = yield (0, s3ConfigCommands_1.handleGetCommand)(userToVerify.avatar, folder);
+            userVerified.avatar_url = imageUrl;
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
             res.cookie('user_access_token', token, {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
@@ -161,12 +162,16 @@ const controller = {
             if (avatar) {
                 randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(avatar, folder);
             }
+            else {
+                const defAvatar = 'default_avatar.jpg';
+                randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(defAvatar, folder);
+            }
             const newUserData = {
                 email,
                 username,
                 password: hashPassword,
                 isAdmin: 0,
-                avatar: avatar ? randomName : null
+                avatar: randomName
             };
             const newUser = yield user_1.default.create(newUserData);
             const userCreated = {
@@ -210,7 +215,7 @@ const controller = {
             else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
                 const bodyAvatar = req.file;
-                let randomName = null;
+                let randomName;
                 let folder = 'avatars';
                 if (user.avatar && bodyAvatar) {
                     yield (0, s3ConfigCommands_1.handleDeleteCommand)(user.avatar, folder);
@@ -219,15 +224,17 @@ const controller = {
                 else if (!user.avatar && bodyAvatar) {
                     randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(bodyAvatar, folder);
                 }
-                else if (!user.avatar && !bodyAvatar) {
+                else {
+                    const defAvatar = 'default_avatar.jpg';
                     yield (0, s3ConfigCommands_1.handleDeleteCommand)(user.avatar, folder);
+                    randomName = yield (0, s3ConfigCommands_1.handlePutCommand)(defAvatar, folder);
                 }
                 const dataToUpdate = {
                     username: req.body.username ? req.body.username : user.username,
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
                     isAdmin: 0,
-                    avatar: randomName ? randomName : null
+                    avatar: randomName
                 };
                 const updatedUser = yield user_1.default.findByIdAndUpdate(userId, dataToUpdate, { new: true });
                 return res.status(200).json(updatedUser);

@@ -8,7 +8,7 @@ const user_1 = __importDefault(require("../controllers/user"));
 const imageUpload_1 = __importDefault(require("../middlewares/imageUpload"));
 const auth_1 = require("../middlewares/auth");
 const router = express_1.default.Router();
-router.get('/', auth_1.verifyToken, auth_1.verifyAdmin, user_1.default.allUsers);
+router.get('/', /* verifyToken, verifyAdmin, */ user_1.default.allUsers);
 router.post('/register', imageUpload_1.default.single('avatar'), user_1.default.register);
 router.post('/login', user_1.default.login);
 router.get('/check-login', user_1.default.checkLogin);
