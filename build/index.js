@@ -16,9 +16,10 @@ const express_session_1 = __importDefault(require("express-session"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const MONGO_URI = process.env.MONGO_URI;
+const SESSION_SECRET = process.env.SESSION_SECRET;
 app.use('/images', express_1.default.static(path_1.default.join(__dirname, '../')));
 app.use((0, express_session_1.default)({
-    secret: "Global session",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false
 }));

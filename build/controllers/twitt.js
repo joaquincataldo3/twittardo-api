@@ -21,13 +21,13 @@ dotenv_1.default.config();
 const controller = {
     allTwitts: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const pages = String(req.query.p);
-            const pagesNumber = Number(pages);
+            const page = String(req.query.p);
+            const pageNumber = Number(page);
             const twittPerPage = 5;
             const twittsResponse = yield twitt_1.default
                 .find()
                 .sort({ createdAt: -1 })
-                .skip(pagesNumber * twittPerPage)
+                .skip(twittPerPage * pageNumber)
                 .limit(twittPerPage)
                 .select('-password -email')
                 .populate('user', '-password -email')

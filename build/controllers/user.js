@@ -140,6 +140,8 @@ const controller = {
             res.cookie('user_access_token', token, {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
             });
+            req.session.userLogged = userVerified;
+            console.log(req.session);
             return res.status(200).json({ userVerified, token });
         }
         catch (error) {
