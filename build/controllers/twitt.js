@@ -59,6 +59,7 @@ const controller = {
             }
             ;
             const twitts = twittsResponse.map((twitt) => ({
+                _id: twitt._id,
                 twitt: twitt.twitt,
                 user: twitt.user,
                 image: twitt.image,
