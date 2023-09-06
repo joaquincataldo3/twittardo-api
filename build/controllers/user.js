@@ -105,7 +105,7 @@ const controller = {
             return res.status(400).json({ msg: 'Error mientras se seguía al usuario' });
         }
     }),
-    login: ((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    processLogin: ((req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { password, email } = req.body;
             const secretKey = process.env.JWT_KEY;
@@ -141,7 +141,6 @@ const controller = {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
             });
             req.session.userLogged = userVerified;
-            console.log(req.session);
             return res.status(200).json({ userVerified, token });
         }
         catch (error) {
@@ -189,14 +188,12 @@ const controller = {
         }
     })),
     checkLogin: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        const userAccessToken = req.cookies['user_access_token'];
-        if (userAccessToken) {
-            const secretKey = process.env.JWT_KEY;
-            const decodedToken = jsonwebtoken_1.default.verify(userAccessToken, secretKey);
-            return res.status(200).json({ isLoggedIn: true, user: decodedToken });
+        const user = req.session.userLogged;
+        if (user) {
+            return res.status(200).json({ loggedIn: true, user });
         }
         else {
-            return res.status(401).json({ isLoggedIn: false });
+            return res.status(200).json({ loggedIn: false });
         }
     }),
     updateUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {

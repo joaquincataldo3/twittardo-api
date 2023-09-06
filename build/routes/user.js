@@ -10,7 +10,7 @@ const auth_1 = require("../middlewares/auth");
 const router = express_1.default.Router();
 router.get('/', /* verifyToken, verifyAdmin, */ user_1.default.allUsers);
 router.post('/register', imageUpload_1.default.single('avatar'), user_1.default.register);
-router.post('/login', user_1.default.login);
+router.post('/login', user_1.default.processLogin);
 router.get('/check-login', user_1.default.checkLogin);
 router.get('/logout', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.logout);
 router.get('/:userId', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.oneUser);
