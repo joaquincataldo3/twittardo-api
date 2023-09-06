@@ -47,6 +47,7 @@ const controller = {
                 twitt.user.image_url = url;
             };
             const twitts: TwittTPopulated[] = twittsResponse.map((twitt: any) => ({
+                _id: twitt._id,
                 twitt: twitt.twitt,
                 user: twitt.user,
                 image: twitt.image,
