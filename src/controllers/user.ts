@@ -3,7 +3,7 @@ import User from '../database/models/user'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
-import { LoginUser, RegisterUser, UserT} from '../types'
+import { LoginUser, RegisterUser, UserT } from '../types'
 import { isValidObjectId } from 'mongoose'
 import { Request, Response } from 'express'
 import { handlePutCommand, handleDeleteCommand, handleGetCommand } from '../utils/s3ConfigCommands'
@@ -144,7 +144,8 @@ const controller = {
             const folder = "users";
             let imageUrl = await handleGetCommand(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
-            const token = jwt.sign({ ...userVerified }, secretKey);    
+            const token = jwt.sign({ ...userVerified }, secretKey);
+            console.log(userVerified)
             res.cookie('user_access_token', token, {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
             })
@@ -205,15 +206,23 @@ const controller = {
         }
 
     }),
-    checkLogin: async (req: Request, res: Response) => {
-        const user = req.session.userLogged 
-        
-        if(user){
-            return res.status(200).json({loggedIn: true, user})
+    checkSession: async (req: Request, res: Response) => {
+        const user = req.session.userLogged
+
+        if (user) {
+            return res.status(200).json({ loggedIn: true, user })
         } else {
-            return res.status(200).json({loggedIn: false})
+            return res.status(200).json({ loggedIn: false })
         }
 
+    },
+    checkCookie: async (req: Request, res: Response) => {
+        if (req.user) {
+            return res.status(200).json({ loggedIn: true, user: req.user })
+        }
+        else {
+            return res.status(200).json({ loggedIn: false })
+        }
     },
     updateUser: async (req: Request, res: Response) => {
         try {
