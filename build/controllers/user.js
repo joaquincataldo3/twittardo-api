@@ -137,6 +137,7 @@ const controller = {
             let imageUrl = yield (0, s3ConfigCommands_1.handleGetCommand)(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
+            console.log(userVerified);
             res.cookie('user_access_token', token, {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
             });
@@ -187,10 +188,18 @@ const controller = {
             return res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` });
         }
     })),
-    checkLogin: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    checkSession: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const user = req.session.userLogged;
         if (user) {
             return res.status(200).json({ loggedIn: true, user });
+        }
+        else {
+            return res.status(200).json({ loggedIn: false });
+        }
+    }),
+    checkCookie: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        if (req.user) {
+            return res.status(200).json({ loggedIn: true, user: req.user });
         }
         else {
             return res.status(200).json({ loggedIn: false });
