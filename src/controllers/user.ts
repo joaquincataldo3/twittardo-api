@@ -3,7 +3,7 @@ import User from '../database/models/user'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
-import { LoginUser, RegisterUser, UserT } from '../types'
+import { LoginUser, RegisterUser, UserT} from '../types'
 import { isValidObjectId } from 'mongoose'
 import { Request, Response } from 'express'
 import { handlePutCommand, handleDeleteCommand, handleGetCommand } from '../utils/s3ConfigCommands'
@@ -110,7 +110,7 @@ const controller = {
             return res.status(400).json({ msg: 'Error mientras se seguía al usuario' })
         }
     },
-    login: (async (req: Request, res: Response) => {
+    processLogin: (async (req: Request, res: Response) => {
         try {
             const { password, email }: LoginUser = req.body
             const secretKey = process.env.JWT_KEY!
@@ -149,7 +149,6 @@ const controller = {
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
             })
             req.session.userLogged = userVerified;
-            console.log(req.session)
 
             return res.status(200).json({ userVerified, token })
 
@@ -207,16 +206,14 @@ const controller = {
 
     }),
     checkLogin: async (req: Request, res: Response) => {
-        const userAccessToken: string | null = req.cookies['user_access_token'];
-
-        if (userAccessToken) {
-            const secretKey = process.env.JWT_KEY!
-            const decodedToken = jwt.verify(userAccessToken, secretKey);
-
-            return res.status(200).json({ isLoggedIn: true, user: decodedToken });
+        const user = req.session.userLogged 
+        
+        if(user){
+            return res.status(200).json({loggedIn: true, user})
         } else {
-            return res.status(401).json({ isLoggedIn: false });
+            return res.status(200).json({loggedIn: false})
         }
+
     },
     updateUser: async (req: Request, res: Response) => {
         try {
