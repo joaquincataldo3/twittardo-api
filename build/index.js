@@ -23,7 +23,21 @@ app.use((0, express_session_1.default)({
     resave: false,
     saveUninitialized: false
 }));
-app.use((0, cors_1.default)());
+// cors
+const allowedOrigins = [process.env.ALLOWED_ORIGIN_A, process.env.ALLOWED_ORIGIN_B];
+const corsOptions = {
+    origin: function (origin, callback) {
+        const strOrigin = String(origin);
+        if (allowedOrigins.indexOf(strOrigin) !== -1 || !origin) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('Acceso no permitido por CORS'));
+        }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));

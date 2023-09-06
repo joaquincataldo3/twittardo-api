@@ -17,12 +17,27 @@ const SESSION_SECRET = process.env.SESSION_SECRET!;
 
 app.use('/images', express.static(path.join(__dirname, '../')));
 
-app.use(session({ 
+app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false
 }));
-app.use(cors())
+
+// cors
+const allowedOrigins = [process.env.ALLOWED_ORIGIN_A, process.env.ALLOWED_ORIGIN_B];
+const corsOptions = {
+    origin: function (origin: any, callback: any ) {
+        const strOrigin = String(origin)
+        if (allowedOrigins.indexOf(strOrigin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Acceso no permitido por CORS'));
+        }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+};
+
+app.use(cors(corsOptions))
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }));
