@@ -9,6 +9,7 @@ import { PORT } from './types'
 import cors from 'cors'
 import path from 'path'
 import session from 'express-session'
+import { Request, Response } from 'express'
 dotenv.config()
 
 const app = express()
@@ -24,20 +25,11 @@ app.use(session({
 }));
 
 // cors
-const allowedOrigins = [process.env.ALLOWED_ORIGIN_A, process.env.ALLOWED_ORIGIN_B];
-const corsOptions = {
-    origin: function (origin: any, callback: any ) {
-        const strOrigin = String(origin)
-        if (allowedOrigins.indexOf(strOrigin) !== -1 || !origin) {
-            callback(null, true);
-        } else {
-            callback(new Error('Acceso no permitido por CORS'));
-        }
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-};
-
-app.use(cors(corsOptions))
+app.use(cors())
+app.use((_req: Request, res: Response, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*'); 
+    next();
+});
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }));
