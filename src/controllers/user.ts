@@ -148,7 +148,8 @@ const controller = {
             console.log(userVerified);
             res.cookie('user_access_token', token, {
                 httpOnly: true,
-                maxAge: 2 * 60 * 60 * 1000 // 2 hours
+                maxAge: 2 * 60 * 60 * 1000, // 2 hours
+                domain: 'localhost:5173'
             });
             console.log("Login: ", req.cookies.user_access_token);
             req.session.userLogged = userVerified;
