@@ -20,6 +20,7 @@ dotenv_1.default.config();
 const verifyToken = (req, res, next) => {
     const jwtKey = process.env.JWT_KEY;
     const token = req.cookies.user_access_token;
+    console.log(token);
     if (!token) {
         return res.status(401).json({ msg: 'No estás autenticado' });
     }
