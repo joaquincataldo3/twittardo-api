@@ -23,9 +23,10 @@ app.use((0, express_session_1.default)({
     resave: false,
     saveUninitialized: false
 }));
-// cors
 app.use((0, cors_1.default)({
-    credentials: true,
+    origin: 'http://localhost:5173',
+    methods: ['POST', 'PUT', 'GET', 'OPTIONS', 'HEAD'],
+    credentials: true
 }));
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
