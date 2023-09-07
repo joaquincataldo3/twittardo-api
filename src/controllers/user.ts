@@ -147,8 +147,8 @@ const controller = {
             const token = jwt.sign({ ...userVerified }, secretKey, {expiresIn: "1d"});
             console.log(userVerified);
             res.cookie('user_access_token', token, {
-                domain: 'http://localhost:5173/',
-                httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
+                httpOnly: true,
+                maxAge: 2 * 60 * 60 * 1000 // 2 hours
             });
             console.log(req.cookies.user_access_token);
             req.session.userLogged = userVerified;
