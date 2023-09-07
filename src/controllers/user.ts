@@ -146,12 +146,12 @@ const controller = {
             userVerified.image_url = imageUrl;
             const token = jwt.sign({ ...userVerified }, secretKey, {expiresIn: "1d"});
             console.log(userVerified);
-            res.cookie('user_access_token', token, {
+            const cookie = res.cookie('user_access_token', token, {
                 httpOnly: true,
                 maxAge: 2 * 60 * 60 * 1000, // 2 hours
                 domain: 'localhost:5173'
             });
-            console.log("Login: ", req.cookies.user_access_token);
+            console.log("Login: ", cookie);
             req.session.userLogged = userVerified;
 
             return res.status(200).json({ userVerified, token })
