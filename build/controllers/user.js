@@ -136,7 +136,7 @@ const controller = {
             const folder = "users";
             let imageUrl = yield (0, s3ConfigCommands_1.handleGetCommand)(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
-            const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
+            const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey, { expiresIn: "1d" });
             console.log(userVerified);
             res.cookie('user_access_token', token, {
                 domain: 'http://localhost:5173/',

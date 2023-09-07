@@ -144,7 +144,7 @@ const controller = {
             const folder = "users";
             let imageUrl = await handleGetCommand(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
-            const token = jwt.sign({ ...userVerified }, secretKey);
+            const token = jwt.sign({ ...userVerified }, secretKey, {expiresIn: "1d"});
             console.log(userVerified);
             res.cookie('user_access_token', token, {
                 domain: 'http://localhost:5173/',
