@@ -25,10 +25,8 @@ app.use(session({
 
 // cors
 app.use(cors({
-    origin: ["http://localhost:5173"], 
-    methods: ["POST", "GET"],
     credentials: true, 
-  }))
+}))
 
 app.use(cookieParser())
 app.use(express.json())
