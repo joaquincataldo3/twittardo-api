@@ -43,7 +43,7 @@ const controller = {
             folder = 'avatars';
             for (let i = 0; i < twittsResponse.length; i++) {
                 let twitt = twittsResponse[i];
-                let url = await handleGetCommand(twitt.user.avatar, folder);        
+                let url = await handleGetCommand(twitt.user.avatar, folder);
                 twitt.user.image_url = url;
             };
             const twitts: TwittTPopulated[] = twittsResponse.map((twitt: any) => ({
@@ -77,11 +77,9 @@ const controller = {
             if (!twittResponse) {
                 return res.status(404).json({ msg: "Twitt no encontrado" })
             } else {
-                await Promise.all(twittResponse.map(async (twitt: any) => {
-                    if (twitt.comments.length > 0) {
-                        await twitt.populate('comments.user').execPopulate();
-                    }
-                }));
+                if (twittResponse.comments.length > 0) {
+                    await twittResponse.populate('comments.user')
+                }
                 const twitt: TwittTPopulated = {
                     twitt: twittResponse.twitt,
                     image: twittResponse.image,

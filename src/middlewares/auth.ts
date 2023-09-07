@@ -29,10 +29,11 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
             req.user = user
             next()
             return;
-        })
-        
+        })     
     }
-    return res.status(500).json({ msg: 'Error interno del servidor' });
+
+    return;
+
 }
 
 
