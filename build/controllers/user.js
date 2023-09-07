@@ -139,6 +139,7 @@ const controller = {
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
             console.log(userVerified);
             res.cookie('user_access_token', token, {
+                domain: 'http://localhost:5173/',
                 httpOnly: true, maxAge: 2 * 60 * 60 * 1000 // 2 hours
             });
             req.session.userLogged = userVerified;
