@@ -20,14 +20,17 @@ app.use('/images', express.static(path.join(__dirname, '../')));
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 1000 * 60 * 60,
+        sameSite: "none",
+        secure: true
+    }
 }));
-
 
 app.use(cors({
     origin: 'http://localhost:5173',
-    methods: ['POST', 'PUT', 'GET', 'OPTIONS', 'HEAD'],
-    credentials: true
+    credentials:true
 }));
 
 app.use(cookieParser())

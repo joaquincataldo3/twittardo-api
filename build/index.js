@@ -21,11 +21,15 @@ app.use('/images', express_1.default.static(path_1.default.join(__dirname, '../'
 app.use((0, express_session_1.default)({
     secret: SESSION_SECRET,
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 1000 * 60 * 60,
+        sameSite: "none",
+        secure: true
+    }
 }));
 app.use((0, cors_1.default)({
     origin: 'http://localhost:5173',
-    methods: ['POST', 'PUT', 'GET', 'OPTIONS', 'HEAD'],
     credentials: true
 }));
 app.use((0, cookie_parser_1.default)());
