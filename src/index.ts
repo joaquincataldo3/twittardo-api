@@ -9,7 +9,6 @@ import { PORT } from './types'
 import cors from 'cors'
 import path from 'path'
 import session from 'express-session'
-import { Request, Response } from 'express'
 dotenv.config()
 
 const app = express()
@@ -25,11 +24,11 @@ app.use(session({
 }));
 
 // cors
-app.use(cors())
-app.use((_req: Request, res: Response, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*'); 
-    next();
-});
+app.use(cors({
+    origin: 'http://localhost:5173', // El origen de tu aplicación React
+    credentials: true, // Habilita las credenciales (cookies)
+  }))
+
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }));
