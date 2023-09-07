@@ -90,11 +90,9 @@ const controller = {
                 return res.status(404).json({ msg: "Twitt no encontrado" });
             }
             else {
-                yield Promise.all(twittResponse.map((twitt) => __awaiter(void 0, void 0, void 0, function* () {
-                    if (twitt.comments.length > 0) {
-                        yield twitt.populate('comments.user').execPopulate();
-                    }
-                })));
+                if (twittResponse.comments.length > 0) {
+                    yield twittResponse.populate('comments.user');
+                }
                 const twitt = {
                     twitt: twittResponse.twitt,
                     image: twittResponse.image,

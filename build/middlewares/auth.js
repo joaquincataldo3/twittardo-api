@@ -33,7 +33,7 @@ const verifyToken = (req, res, next) => {
             return;
         });
     }
-    return res.status(500).json({ msg: 'Error interno del servidor' });
+    return;
 };
 exports.verifyToken = verifyToken;
 const verifyUserOrAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
