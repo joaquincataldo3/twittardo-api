@@ -198,6 +198,7 @@ const controller = {
         }
     }),
     checkCookie: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log(req.user);
         if (req.user) {
             return res.status(200).json({ loggedIn: true, user: req.user });
         }

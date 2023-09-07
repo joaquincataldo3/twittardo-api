@@ -21,7 +21,7 @@ const verifyToken = (req, res, next) => {
     const jwtKey = process.env.JWT_KEY;
     const token = req.cookies.user_access_token;
     if (!token) {
-        res.status(401).json({ msg: 'No estás autenticado' });
+        return res.status(401).json({ msg: 'No estás autenticado' });
     }
     if (jwtKey) {
         jsonwebtoken_1.default.verify(token, jwtKey, (err, user) => {
@@ -29,9 +29,11 @@ const verifyToken = (req, res, next) => {
                 return res.status(403).json({ msg: 'Token invalido' });
             }
             req.user = user;
-            return next();
+            next();
+            return;
         });
     }
+    return res.status(500).json({ msg: 'Error interno del servidor' });
 };
 exports.verifyToken = verifyToken;
 const verifyUserOrAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -43,7 +45,8 @@ const verifyUserOrAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         if (!compareUser) {
             return res.status(403).json({ msg: 'No estás autorizado a performar esta acción' });
         }
-        return next();
+        next();
+        return;
     }
     catch (error) {
         console.log(error);
@@ -54,7 +57,8 @@ exports.verifyUserOrAdmin = verifyUserOrAdmin;
 const verifyAdmin = (req, res, next) => {
     const user = req.user._doc;
     if (user.isAdmin) {
-        return next();
+        next();
+        return;
     }
     else {
         return res.status(403).json({ msg: 'No estás autorizado a performar esta acción' });
