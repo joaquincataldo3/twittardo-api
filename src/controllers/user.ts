@@ -217,6 +217,7 @@ const controller = {
 
     },
     checkCookie: async (req: Request, res: Response) => {
+        console.log(req.user)
         if (req.user) {
             return res.status(200).json({ loggedIn: true, user: req.user })
         }

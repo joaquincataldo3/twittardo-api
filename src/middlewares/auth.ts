@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { Response, NextFunction, Request } from 'express'
 import User from '../database/models/user'
-import {UserT} from '../types'
+import { UserT } from '../types'
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -18,7 +18,7 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
 
 
     if (!token) {
-        res.status(401).json({ msg: 'No estás autenticado' })
+        return res.status(401).json({ msg: 'No estás autenticado' })
     }
 
     if (jwtKey) {
@@ -27,26 +27,31 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
                 return res.status(403).json({ msg: 'Token invalido' })
             }
             req.user = user
-            return next()
+            next()
+            return;
         })
+        
     }
+    return res.status(500).json({ msg: 'Error interno del servidor' });
 }
 
 
 const verifyUserOrAdmin = async (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        if(req.user.isAdmin == 1){
+        if (req.user.isAdmin == 1) {
             return next()
         }
 
         const compareUser = await User.findById(req.user._id)
 
-        if(!compareUser){
+        if (!compareUser) {
             return res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
         }
 
-       return next();
+        next();
+
+        return;
 
     } catch (error) {
         console.log(error)
@@ -59,7 +64,8 @@ const verifyUserOrAdmin = async (req: Request, res: Response, next: NextFunction
 const verifyAdmin = (req: Request, res: Response, next: NextFunction) => {
     const user: UserT = req.user._doc
     if (user.isAdmin) {
-        return next()
+        next()
+        return;
     } else {
         return res.status(403).json({ msg: 'No estás autorizado a performar esta acción' })
     }
