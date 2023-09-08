@@ -145,9 +145,9 @@ const controller = {
             let imageUrl = await handleGetCommand(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
             const token = jwt.sign({ ...userVerified }, secretKey);
-            console.log(userVerified);
-            res.cookie('user_access_token', token, { httpOnly: true });
-            console.log("Login: ", req.cookies.user_access_token);
+            res.cookie('user_access_token', token, { httpOnly: true, domain: "localhost", secure: false });
+            const userAccessToken = req.cookies.user_access_token;
+            console.log("Login:", userAccessToken);
             req.session.userLogged = userVerified;
 
             return res.status(200).json({ userVerified, token })
@@ -215,9 +215,11 @@ const controller = {
         }
 
     },
+    
     checkCookie: async (req: Request, res: Response) => {
-        console.log(req.user)
-        if (req.user) {
+        const userAccessToken = req.cookies.user_access_token;
+        console.log("Check:", userAccessToken);
+        if (userAccessToken) {
             return res.status(200).json({ loggedIn: true, user: req.user })
         }
         else {

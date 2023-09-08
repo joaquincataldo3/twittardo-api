@@ -25,7 +25,7 @@ app.use((0, express_session_1.default)({
     cookie: {
         maxAge: 1000 * 60 * 60,
         sameSite: "none",
-        secure: true
+        secure: false
     }
 }));
 app.use((0, cors_1.default)({

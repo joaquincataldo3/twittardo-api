@@ -19,13 +19,13 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const verifyToken = (req, res, next) => {
     const jwtKey = process.env.JWT_KEY;
-    const token = req.cookies.user_access_token;
-    console.log(token);
-    if (!token) {
+    const userAccessToken = req.cookies.user_access_token;
+    console.log("Verify:", req.cookies);
+    if (!userAccessToken) {
         return res.status(401).json({ msg: 'No estás autenticado' });
     }
     if (jwtKey) {
-        jsonwebtoken_1.default.verify(token, jwtKey, (err, user) => {
+        jsonwebtoken_1.default.verify(userAccessToken, jwtKey, (err, user) => {
             if (err) {
                 return res.status(403).json({ msg: 'Token invalido' });
             }

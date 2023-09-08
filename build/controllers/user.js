@@ -137,9 +137,9 @@ const controller = {
             let imageUrl = yield (0, s3ConfigCommands_1.handleGetCommand)(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
-            console.log(userVerified);
-            res.cookie('user_access_token', token, { httpOnly: true });
-            console.log("Login: ", req.cookies.user_access_token);
+            res.cookie('user_access_token', token, { httpOnly: true, domain: "localhost", secure: false });
+            const userAccessToken = req.cookies.user_access_token;
+            console.log("Login:", userAccessToken);
             req.session.userLogged = userVerified;
             return res.status(200).json({ userVerified, token });
         }
@@ -197,8 +197,9 @@ const controller = {
         }
     }),
     checkCookie: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log(req.user);
-        if (req.user) {
+        const userAccessToken = req.cookies.user_access_token;
+        console.log("Check:", userAccessToken);
+        if (userAccessToken) {
             return res.status(200).json({ loggedIn: true, user: req.user });
         }
         else {

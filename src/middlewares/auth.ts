@@ -14,15 +14,15 @@ declare module 'express' { // declaration merging
 const verifyToken = (req: Request, res: Response, next: NextFunction) => {
 
     const jwtKey = process.env.JWT_KEY!
-    const token: string = req.cookies.user_access_token
-    console.log(token)
+    const userAccessToken: string = req.cookies.user_access_token;
+    console.log("Verify:", req.cookies);
 
-    if (!token) {
+    if (!userAccessToken) {
         return res.status(401).json({ msg: 'No estás autenticado' })
     }
 
     if (jwtKey) {
-        jwt.verify(token, jwtKey, (err: any, user) => {
+        jwt.verify(userAccessToken, jwtKey, (err: any, user) => {
             if (err) {
                 return res.status(403).json({ msg: 'Token invalido' })
             }
