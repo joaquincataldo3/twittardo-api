@@ -133,11 +133,11 @@ const controller = {
                 following: verifyEmail.following,
                 image_url: ''
             };
-            const folder = "users";
+            const folder = "avatars";
             let imageUrl = yield (0, s3ConfigCommands_1.handleGetCommand)(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
-            res.cookie('user_access_token', token, { httpOnly: true, domain: "localhost", secure: false });
+            res.cookie('user_access_token', token, { httpOnly: true, secure: false });
             const userAccessToken = req.cookies.user_access_token;
             console.log("Login:", userAccessToken);
             req.session.userLogged = userVerified;

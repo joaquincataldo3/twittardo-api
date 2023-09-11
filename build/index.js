@@ -18,6 +18,7 @@ const app = (0, express_1.default)();
 const MONGO_URI = process.env.MONGO_URI;
 const SESSION_SECRET = process.env.SESSION_SECRET;
 app.use('/images', express_1.default.static(path_1.default.join(__dirname, '../')));
+app.use((0, cookie_parser_1.default)());
 app.use((0, express_session_1.default)({
     secret: SESSION_SECRET,
     resave: false,
@@ -32,7 +33,6 @@ app.use((0, cors_1.default)({
     origin: 'http://localhost:5173',
     credentials: true
 }));
-app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
 app.use('/users', user_1.default);
