@@ -197,6 +197,7 @@ const controller = {
     }),
     checkCookie: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const userAccessToken = req.cookies.user_access_token;
+        console.log({ cookie: userAccessToken });
         if (userAccessToken) {
             return res.status(200).json({ loggedIn: true, user: req.user });
         }
@@ -297,8 +298,13 @@ const controller = {
         }
     }),
     logout: (_req, res) => {
-        res.cookie('user_access_token', '', { maxAge: 1 });
-        return res.status(200).json({ msg: "Fuiste deslogueado" });
+        try {
+            res.cookie('user_access_token', '', { maxAge: 1 });
+            return res.status(200).json({ msg: "Fuiste deslogueado" });
+        }
+        catch (error) {
+            return res.status(400).json({ msg: error });
+        }
     }
 };
 exports.default = controller;

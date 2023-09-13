@@ -80,10 +80,24 @@ const controller = {
                 if (twittResponse.comments.length > 0) {
                     await twittResponse.populate('comments.user')
                 }
+                let folder;
+
+                if (twittResponse.image) {
+                    folder = 'twitts';
+                    let url = await handleGetCommand(twittResponse.image, folder);
+                    twittResponse.image_url = url;
+                }
+
+                // voy por cada imagen del usuario
+                folder = 'avatars';
+                let url = await handleGetCommand(twittResponse.user.avatar, folder);
+                twittResponse.user.image_url = url;
+
                 const twitt: TwittTPopulated = {
                     twitt: twittResponse.twitt,
                     image: twittResponse.image,
                     user: twittResponse.user,
+                    image_url: twittResponse.image_url,
                     comments: twittResponse.comments,
                     favourites: twittResponse.favourites,
                     commentsNumber: twittResponse.commentsNumber,

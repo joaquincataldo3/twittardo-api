@@ -93,10 +93,21 @@ const controller = {
                 if (twittResponse.comments.length > 0) {
                     yield twittResponse.populate('comments.user');
                 }
+                let folder;
+                if (twittResponse.image) {
+                    folder = 'twitts';
+                    let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twittResponse.image, folder);
+                    twittResponse.image_url = url;
+                }
+                // voy por cada imagen del usuario
+                folder = 'avatars';
+                let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twittResponse.user.avatar, folder);
+                twittResponse.user.image_url = url;
                 const twitt = {
                     twitt: twittResponse.twitt,
                     image: twittResponse.image,
                     user: twittResponse.user,
+                    image_url: twittResponse.image_url,
                     comments: twittResponse.comments,
                     favourites: twittResponse.favourites,
                     commentsNumber: twittResponse.commentsNumber,

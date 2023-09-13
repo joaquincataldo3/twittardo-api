@@ -8,7 +8,13 @@ import { isValidObjectId } from 'mongoose'
 import { Request, Response } from 'express'
 import { handlePutCommand, handleDeleteCommand, handleGetCommand } from '../utils/s3ConfigCommands'
 
-dotenv.config()
+dotenv.config();
+
+declare module 'express' { // declaration merging
+    interface Request {
+        user?: any;
+    }
+}
 
 const controller = {
     allUsers: async (_req: Request, res: Response) => {
@@ -214,9 +220,10 @@ const controller = {
         }
 
     },
-    
+
     checkCookie: async (req: Request, res: Response) => {
         const userAccessToken = req.cookies.user_access_token;
+        console.log({cookie: userAccessToken})
         if (userAccessToken) {
             return res.status(200).json({ loggedIn: true, user: req.user })
         }
@@ -333,8 +340,13 @@ const controller = {
 
     },
     logout: (_req: Request, res: Response) => {
-        res.cookie('user_access_token', '', { maxAge: 1 })
-        return res.status(200).json({ msg: "Fuiste deslogueado" })
+        try {
+            res.cookie('user_access_token', '', { maxAge: 1 })
+            return res.status(200).json({ msg: "Fuiste deslogueado" })
+        } catch (error) {
+            return res.status(400).json({msg: error})
+        }
+
     }
 }
 

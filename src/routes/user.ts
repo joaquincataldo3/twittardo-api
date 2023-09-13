@@ -4,10 +4,10 @@ import imageUpload from '../middlewares/imageUpload'
 import {/*  verifyAdmin, */ verifyToken, verifyUserOrAdmin } from '../middlewares/auth'
 
 const router = express.Router()
-router.get('/', /* verifyToken, verifyAdmin, */ userController.allUsers);
+router.get('/', verifyUserOrAdmin, userController.allUsers);
 router.get('/check-session', userController.checkSession);
 router.get('/check-cookie', verifyToken, userController.checkCookie);
-router.get('/logout', verifyToken, verifyUserOrAdmin, userController.logout);
+router.get('/logout', verifyToken, userController.logout);
 router.get('/:userId', verifyToken, verifyUserOrAdmin, userController.oneUser);
 
 router.post('/register', imageUpload.single('avatar'), userController.register);
