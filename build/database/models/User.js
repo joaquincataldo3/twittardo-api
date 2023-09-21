@@ -35,6 +35,10 @@ const userSchema = new mongoose_2.Schema({
             type: mongoose_2.Types.ObjectId,
             ref: 'Twitt'
         }],
+    comments: [{
+            type: mongoose_2.Types.ObjectId,
+            ref: 'Comment'
+        }],
     followers: [{
             type: mongoose_2.Types.ObjectId,
             ref: 'User'

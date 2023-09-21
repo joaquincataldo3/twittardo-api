@@ -32,7 +32,8 @@ const controller = {
                 favourites: user.favourites,
                 twitts: user.twitts,
                 followers: user.followers,
-                following: user.following
+                following: user.following,
+                comments: user.comments
             }));
             // aca voy por cada imagen y hago un getobjectcommand para obtener el url
             const folder = 'avatars';
@@ -41,21 +42,22 @@ const controller = {
                 let url = await handleGetCommand(user.avatar, folder);
                 user.image_url = url;
             };
-            return res.status(200).json(users)
+            return res.status(200).json(users);
         } catch (error) {
             return res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` })
         }
     },
     oneUser: async (req: Request, res: Response) => {
         try {
-            const id: string = req.params.userId
+            const id: string = req.params.userId;
             if (!isValidObjectId(id)) {
-                return res.status(400).json({ msg: 'Id de usuario invalido' })
+                return res.status(400).json({ msg: 'Id de usuario invalido' });
             }
             const userToFind = await User
                 .findById(id)
-                .populate('twitts');
-          
+                .populate('twitts')
+                .populate('comments')
+                .select('-password')
             if (userToFind === null) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
@@ -72,6 +74,18 @@ const controller = {
                 let url = await handleGetCommand(twitt.user.avatar, folder);
                 twitt.user.image_url = url;
             }
+
+            for(let comment of userFound.comments){
+                await comment
+                .populate('user')
+                .populate('twittCommented')
+            }
+
+            
+            for(let twitt of userFound.comments.twittCommented){
+                await twitt
+                .populate('user')
+            }
         
             let url = await handleGetCommand(userFound.avatar, folder);
             userFound.image_url = url;
@@ -83,6 +97,7 @@ const controller = {
                 isAdmin: userFound.isAdmin,
                 favourites: userFound.favourites,
                 twitts: userFound.twitts,
+                comments: userFound.comments,
                 followers: userFound.followers,
                 following: userFound.following,
                 image_url: userFound.image_url,
@@ -159,6 +174,7 @@ const controller = {
                 twitts: verifyEmail.twitts,
                 followers: verifyEmail.followers,
                 following: verifyEmail.following,
+                comments: verifyEmail.comments,
                 image_url: ''
             }
             const folder = "avatars";
@@ -259,6 +275,7 @@ const controller = {
                 followers: userFound.followers,
                 following: userFound.following,
                 image_url: userFound.image_url,
+                comments: userFound.comments
             }
             return res.status(200).json({ loggedIn: true, user: oneUser })
         }

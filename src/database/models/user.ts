@@ -31,6 +31,10 @@ import { Schema, Types } from "mongoose"
       type: Types.ObjectId,
       ref: 'Twitt'
     }],
+    comments: [{
+      type: Types.ObjectId,
+      ref: 'Comment'
+    }],
     followers: [{
       type: Types.ObjectId,
       ref: 'User'

@@ -11,6 +11,9 @@ const commentSchema: Schema =new Schema  ({
         ref: 'User', 
         required: true
     },
+    favourites: {
+        type: Number
+    },
     twittCommented: {
         type: Types.ObjectId,
         ref: 'Twitt', 

@@ -113,8 +113,8 @@ const controller = {
     },
     favOneTwitt: async (req: Request, res: Response) => {
         try {
-            const twittId = req.params.twittId
-            const userId = req.params.userId
+            const twittId = req.params.twittId;
+            const userId = req.params.userId;
 
             if (!isValidObjectId(userId) || !isValidObjectId(twittId)) {
                 return res.status(400).json({ msg: 'Twitt o usuario id invalido' })
@@ -133,20 +133,20 @@ const controller = {
                 new: true
             })
 
-            return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' })
+            return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' });
 
         } catch (error) {
-            console.log(error)
-            return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` })
+            console.log(error);
+            return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
         }
     },
     createTwitt: async (req: Request, res: Response) => {
         try {
-            const userId: string = req.params.userId
-            const twittImage = req.file as Express.Multer.File
+            const userId: string = req.params.userId;
+            const twittImage = req.file as Express.Multer.File;
 
             if (!isValidObjectId(userId)) {
-                return res.status(400).json({ msg: 'Id de usuario invalido' })
+                return res.status(400).json({ msg: 'Id de usuario invalido' });
             }
 
             let randomName = null;
@@ -175,29 +175,29 @@ const controller = {
                 new: true
             })
 
-            return res.status(200).json(newTwitt)
+            return res.status(200).json(newTwitt);
 
         } catch (error) {
-            console.log(error)
-            return res.status(400).json({ msg: `Problema mientras se creaba un twitt: ${error}` })
+            console.log(error);
+            return res.status(400).json({ msg: `Problema mientras se creaba un twitt: ${error}` });
         }
     },
     deleteTwitt: async (req: Request, res: Response) => {
 
         try {
-            const twittIdToDelete = req.params.twittIdToDelete
+            const twittIdToDelete = req.params.twittIdToDelete;
 
             if (!isValidObjectId(twittIdToDelete)) {
                 return res.status(400).json({ msg: 'Twitt id invalido' })
             }
 
-            await Twitt.findByIdAndRemove(twittIdToDelete)
+            await Twitt.findByIdAndRemove(twittIdToDelete);
 
-            return res.status(200).json(twittIdToDelete)
+            return res.status(200).json(twittIdToDelete);
 
         } catch (error) {
-            console.log(error)
-            return res.status(400).json({ msg: `Problema mientras se borraba un twitt: ${error}` })
+            console.log(error);
+            return res.status(400).json({ msg: `Problema mientras se borraba un twitt: ${error}` });
         }
 
 

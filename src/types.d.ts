@@ -18,7 +18,8 @@ export interface UserT {
     favourites?: TwittT[] | [],
     twitts?: TwittT[] | [],
     followers?: UserToFront[] | [],
-    following?: UserToFront | []
+    following?: UserToFront | [],
+    comments?: CommentT[] | []
 }
 
 export interface TwittT {
@@ -40,7 +41,8 @@ export interface TwittTPopulated extends TwittT {
 export interface CommentT {
     comment: string,
     user: string,
-    twittId: string
+    twittId: string,
+    favourites: number
 }
 
 export interface SchemaNameT {

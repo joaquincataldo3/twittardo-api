@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const comment_1 = __importDefault(require("../database/models/comment"));
 const twitt_1 = __importDefault(require("../database/models/twitt"));
+const user_1 = __importDefault(require("../database/models/user"));
 const mongoose_1 = require("mongoose");
 const controller = {
     allComments: (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -36,7 +37,8 @@ const controller = {
             const commentData = {
                 comment: req.body.comment,
                 user: userId,
-                twittId
+                twittId,
+                favourites: 0
             };
             const newComment = yield comment_1.default.create(commentData);
             const pushCommentInTwitt = yield twitt_1.default.findByIdAndUpdate(twittId, {
@@ -49,11 +51,40 @@ const controller = {
             }, {
                 new: true
             });
-            return res.status(200).json({ newComment, pushCommentInTwitt });
+            const pushCommentInUser = yield user_1.default.findByIdAndUpdate(userId, {
+                $addToSet: {
+                    comments: newComment._id
+                }
+            }, {
+                new: true
+            });
+            return res.status(200).json({ newComment, pushCommentInTwitt, pushCommentInUser });
         }
         catch (error) {
             console.log(error);
             return res.status(400).json({ msg: `Problema mientras se creaba un comentario: ${error}` });
+        }
+    }),
+    favOneComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const twittId = req.params.twittId;
+            const userId = req.params.userId;
+            if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
+                return res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+            }
+            yield comment_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: 1 } }, { new: true });
+            yield user_1.default.findByIdAndUpdate(userId, {
+                $addToSet: {
+                    favourites: twittId
+                },
+            }, {
+                new: true
+            });
+            return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
         }
     }),
     deleteComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {

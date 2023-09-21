@@ -15,6 +15,9 @@ const commentSchema = new mongoose_2.Schema({
         ref: 'User',
         required: true
     },
+    favourites: {
+        type: Number
+    },
     twittCommented: {
         type: mongoose_2.Types.ObjectId,
         ref: 'Twitt',
