@@ -12,7 +12,7 @@ router.get('/check-session', user_1.default.checkSession);
 router.get('/check-cookie', auth_1.verifyToken, user_1.default.checkCookie);
 router.get('/logout', auth_1.verifyToken, user_1.default.logout);
 router.get('/', auth_1.verifyUserOrAdmin, user_1.default.allUsers);
-router.get('/:userId', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.oneUser);
+router.get('/:userId', user_1.default.oneUser);
 router.post('/register', imageUpload_1.default.single('avatar'), user_1.default.register);
 router.post('/login', user_1.default.processLogin);
 router.put('/:userId/update', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.follow);

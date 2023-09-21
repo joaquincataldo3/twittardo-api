@@ -63,11 +63,20 @@ const controller = {
             if (userToFind === null) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
-            const userFound = userToFind;
-            console.log(userFound);
-            /*   if (userFound.twitts && userFound.twitts.length > 0) {
-                  await userFound.populate('comments.user');
-              } */
+            let userFound = userToFind;
+            let folder = 'twitts';
+            for (let twitt of userFound.twitts) {
+                if (twitt.image) {
+                    let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twitt.image, folder);
+                    twitt.image_url = url;
+                }
+                yield twitt.populate('user');
+                folder = 'avatars';
+                let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twitt.user.avatar, folder);
+                twitt.user.image_url = url;
+            }
+            let url = yield (0, s3ConfigCommands_1.handleGetCommand)(userFound.avatar, folder);
+            userFound.image_url = url;
             let oneUser = {
                 _id: userFound._id,
                 username: userFound.username,
@@ -78,14 +87,12 @@ const controller = {
                 twitts: userFound.twitts,
                 followers: userFound.followers,
                 following: userFound.following,
-                image_url: '',
+                image_url: userFound.image_url,
             };
-            const folder = 'avatars';
-            let url = yield (0, s3ConfigCommands_1.handleGetCommand)(oneUser.avatar, folder);
-            oneUser.image_url = url;
             return res.status(200).json(oneUser);
         }
         catch (error) {
+            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` });
         }
     }),
@@ -201,9 +208,30 @@ const controller = {
     }),
     checkCookie: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const userAccessToken = req.cookies.user_access_token;
-        console.log({ cookie: userAccessToken });
         if (userAccessToken) {
-            return res.status(200).json({ loggedIn: true, user: req.user });
+            const userToFind = yield user_1.default
+                .findById(req.user._id)
+                .populate('twitts');
+            if (!userToFind) {
+                return res.status(404).json({ msg: "Usuario no encontrado" });
+            }
+            const folder = 'avatars';
+            let url = yield (0, s3ConfigCommands_1.handleGetCommand)(userToFind.avatar, folder);
+            userToFind.image_url = url;
+            const userFound = userToFind;
+            let oneUser = {
+                _id: userFound._id,
+                username: userFound.username,
+                email: userFound.email,
+                avatar: userFound.avatar,
+                isAdmin: userFound.isAdmin,
+                favourites: userFound.favourites,
+                twitts: userFound.twitts,
+                followers: userFound.followers,
+                following: userFound.following,
+                image_url: userFound.image_url,
+            };
+            return res.status(200).json({ loggedIn: true, user: oneUser });
         }
         else {
             return res.status(200).json({ loggedIn: false });
