@@ -14,6 +14,11 @@ const commentSchema = new mongoose_2.Schema({
         type: mongoose_2.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    twittCommented: {
+        type: mongoose_2.Types.ObjectId,
+        ref: 'Twitt',
+        required: true
     }
 });
 const model = mongoose_1.default.model('Comment', commentSchema);

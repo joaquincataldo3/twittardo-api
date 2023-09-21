@@ -30,6 +30,7 @@ const controller = {
             const commentData: CommentT = {
                 comment: req.body.comment,
                 user: userId,
+                twittId
             }
 
             const newComment = await Comment.create(commentData)

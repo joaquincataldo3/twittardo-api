@@ -39,9 +39,9 @@ export interface TwittTPopulated extends TwittT {
 
 export interface CommentT {
     comment: string,
-    user: string
+    user: string,
+    twittId: string
 }
-
 
 export interface SchemaNameT {
     User: string,

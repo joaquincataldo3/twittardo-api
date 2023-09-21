@@ -36,6 +36,7 @@ const controller = {
             const commentData = {
                 comment: req.body.comment,
                 user: userId,
+                twittId
             };
             const newComment = yield comment_1.default.create(commentData);
             const pushCommentInTwitt = yield twitt_1.default.findByIdAndUpdate(twittId, {

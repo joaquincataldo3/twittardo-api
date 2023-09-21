@@ -10,6 +10,11 @@ const commentSchema: Schema =new Schema  ({
         type: Types.ObjectId,
         ref: 'User', 
         required: true
+    },
+    twittCommented: {
+        type: Types.ObjectId,
+        ref: 'Twitt', 
+        required: true
     }
 })
 

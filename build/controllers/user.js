@@ -64,6 +64,10 @@ const controller = {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
             const userFound = userToFind;
+            console.log(userFound);
+            /*   if (userFound.twitts && userFound.twitts.length > 0) {
+                  await userFound.populate('comments.user');
+              } */
             let oneUser = {
                 _id: userFound._id,
                 username: userFound.username,
@@ -299,7 +303,7 @@ const controller = {
     }),
     logout: (_req, res) => {
         try {
-            res.cookie('user_access_token', '', { maxAge: 1 });
+            res.cookie('user_access_token', '', { maxAge: 1, httpOnly: true, secure: false });
             return res.status(200).json({ msg: "Fuiste deslogueado" });
         }
         catch (error) {

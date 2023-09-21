@@ -54,11 +54,27 @@ const controller = {
             }
             const userToFind = await User
                 .findById(id)
-                .populate('twitts')
+                .populate('twitts');
+          
             if (userToFind === null) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
-            const userFound = userToFind
+            let userFound = userToFind;
+            
+            let folder = 'twitts';
+            for (let twitt of userFound.twitts) {
+                if (twitt.image) {
+                    let url = await handleGetCommand(twitt.image, folder);
+                    twitt.image_url = url;
+                }
+                await twitt.populate('user');
+                folder = 'avatars';
+                let url = await handleGetCommand(twitt.user.avatar, folder);
+                twitt.user.image_url = url;
+            }
+        
+            let url = await handleGetCommand(userFound.avatar, folder);
+            userFound.image_url = url;
             let oneUser: UserT = {
                 _id: userFound._id as string,
                 username: userFound.username,
@@ -69,13 +85,11 @@ const controller = {
                 twitts: userFound.twitts,
                 followers: userFound.followers,
                 following: userFound.following,
-                image_url: '',
+                image_url: userFound.image_url,
             }
-            const folder = 'avatars';
-            let url = await handleGetCommand(oneUser.avatar, folder);
-            oneUser.image_url = url;
             return res.status(200).json(oneUser)
         } catch (error) {
+            console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
         }
 
@@ -223,9 +237,30 @@ const controller = {
 
     checkCookie: async (req: Request, res: Response) => {
         const userAccessToken = req.cookies.user_access_token;
-        console.log({cookie: userAccessToken})
         if (userAccessToken) {
-            return res.status(200).json({ loggedIn: true, user: req.user })
+            const userToFind = await User
+                .findById(req.user._id)
+                .populate('twitts')
+            if (!userToFind) {
+                return res.status(404).json({ msg: "Usuario no encontrado" })
+            }
+            const folder = 'avatars';
+            let url = await handleGetCommand(userToFind.avatar, folder);
+            userToFind.image_url = url;
+            const userFound = userToFind
+            let oneUser: UserT = {
+                _id: userFound._id as string,
+                username: userFound.username,
+                email: userFound.email,
+                avatar: userFound.avatar,
+                isAdmin: userFound.isAdmin,
+                favourites: userFound.favourites,
+                twitts: userFound.twitts,
+                followers: userFound.followers,
+                following: userFound.following,
+                image_url: userFound.image_url,
+            }
+            return res.status(200).json({ loggedIn: true, user: oneUser })
         }
         else {
             return res.status(200).json({ loggedIn: false })
@@ -341,10 +376,10 @@ const controller = {
     },
     logout: (_req: Request, res: Response) => {
         try {
-            res.cookie('user_access_token', '', { maxAge: 1 })
+            res.cookie('user_access_token', '', { maxAge: 1, httpOnly: true, secure: false })
             return res.status(200).json({ msg: "Fuiste deslogueado" })
         } catch (error) {
-            return res.status(400).json({msg: error})
+            return res.status(400).json({ msg: error })
         }
 
     }
