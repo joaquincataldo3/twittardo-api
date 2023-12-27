@@ -25,13 +25,13 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         maxAge: 1000 * 60 * 60,
-        sameSite: "none",
+        sameSite: false,
         secure: process.env.NODE_ENV == 'production' ? true : false
     }
 }));
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: process.env.REACT_APP_URL,
     credentials:true
 }));
 

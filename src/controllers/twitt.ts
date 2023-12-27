@@ -12,7 +12,7 @@ const controller = {
     allTwitts: async (req: Request, res: Response) => {
         try {
             const page: string = String(req.query.p);
-        
+
             const pageNumber: number = Number(page)
             const twittPerPage: number = 5;
             const twittsResponse = await Twitt
@@ -57,7 +57,7 @@ const controller = {
                 favourites: twitt.favourites,
                 commentsNumber: twitt.commentsNumber,
             }));
-            
+
             return res.status(200).json(twitts);
         } catch (error) {
             console.log(error)
@@ -140,6 +140,38 @@ const controller = {
         } catch (error) {
             console.log(error);
             return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
+        }
+    },
+    unfavOneTwitt: async (req: Request, res: Response) => {
+        try {
+            const twittId = req.params.twittId;
+            const userId = req.params.userId;
+
+            if (!isValidObjectId(userId) || !isValidObjectId(twittId)) {
+                return res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+            }
+
+            await Twitt.findByIdAndUpdate(
+                twittId,
+                { $inc: { favourites: -1 } }, 
+                { new: true }
+            );
+
+            await User.findByIdAndUpdate(
+                userId,
+                {
+                    $pull: {
+                        favourites: twittId,
+                    },
+                },
+                { new: true }
+            );
+
+            return res.status(200).json({ msg: 'Desfavorecido satisfactoriamente' });
+
+        } catch (error) {
+            console.log(error);
+            return res.status(400).json({ msg: `Problema mientras se desfavorecía un twitt: ${error}` });
         }
     },
     createTwitt: async (req: Request, res: Response) => {
