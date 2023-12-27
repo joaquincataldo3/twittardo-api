@@ -182,6 +182,7 @@ const controller = {
             userVerified.image_url = imageUrl;
             const token = jwt.sign({ ...userVerified }, secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
+            console.log(req.cookies.user_access_token)
             req.session.userLogged = userVerified;
 
             return res.status(200).json({ userVerified, token })

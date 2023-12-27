@@ -12,7 +12,7 @@ const controller = {
     allTwitts: async (req: Request, res: Response) => {
         try {
             const page: string = String(req.query.p);
-            console.log(page);
+        
             const pageNumber: number = Number(page)
             const twittPerPage: number = 5;
             const twittsResponse = await Twitt
@@ -57,7 +57,7 @@ const controller = {
                 favourites: twitt.favourites,
                 commentsNumber: twitt.commentsNumber,
             }));
-            console.log(twitts.length);
+            
             return res.status(200).json(twitts);
         } catch (error) {
             console.log(error)
