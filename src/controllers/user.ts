@@ -180,7 +180,6 @@ const controller = {
             const folder = "avatars";
             let imageUrl = await handleGetCommand(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
-            console.log(userVerified)
             const token = jwt.sign({ ...userVerified }, secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
             req.session.userLogged = userVerified;
@@ -250,9 +249,9 @@ const controller = {
         }
 
     },
-
     checkCookie: async (req: Request, res: Response) => {
         const userAccessToken = req.cookies.user_access_token;
+        console.log(userAccessToken);
         if (userAccessToken) {
             const userToFind = await User
                 .findById(req.user._id)
