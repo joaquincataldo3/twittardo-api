@@ -15,7 +15,7 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
 
     const jwtKey = process.env.JWT_KEY!
     const userAccessToken: string = req.cookies.user_access_token;
-    console.log({verify: req.cookies})
+    
     if (!userAccessToken) {
         return res.status(401).json({ msg: 'No estás autenticado' })
     }

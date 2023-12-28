@@ -3,7 +3,7 @@ import User from '../database/models/user';
 import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
-import { TwittT, TwittTPopulated } from '../types';
+import { TwittT } from '../types';
 import { handlePutCommand, handleGetCommand } from '../utils/s3ConfigCommands';
 
 dotenv.config()
@@ -47,18 +47,8 @@ const controller = {
                 let url = await handleGetCommand(twitt.user.avatar, folder);
                 twitt.user.image_url = url;
             };
-            const twitts: TwittTPopulated[] = twittsResponse.map((twitt: any) => ({
-                _id: twitt._id,
-                twitt: twitt.twitt,
-                user: twitt.user,
-                image: twitt.image,
-                image_url: twitt.image_url,
-                comments: twitt.comments,
-                favourites: twitt.favourites,
-                commentsNumber: twitt.commentsNumber,
-            }));
 
-            return res.status(200).json(twitts);
+            return res.status(200).json(twittsResponse);
         } catch (error) {
             console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaban los twitts: ${error}` })
@@ -74,8 +64,8 @@ const controller = {
             const twittResponse = await Twitt
                 .findById(twittId)
                 .select('-password -email')
-                .populate('user', '-password -email')
-                .populate('comments')
+                .populate({path: 'user', select: '-password -email'})
+                .populate({path: 'comments', model: 'Comment'})
             if (!twittResponse) {
                 return res.status(404).json({ msg: "Twitt no encontrado" })
             } else {
@@ -95,17 +85,7 @@ const controller = {
                 let url = await handleGetCommand(twittResponse.user.avatar, folder);
                 twittResponse.user.image_url = url;
 
-                const twitt: TwittTPopulated = {
-                    twitt: twittResponse.twitt,
-                    image: twittResponse.image,
-                    user: twittResponse.user,
-                    image_url: twittResponse.image_url,
-                    comments: twittResponse.comments,
-                    favourites: twittResponse.favourites,
-                    commentsNumber: twittResponse.commentsNumber,
-                    // Aquí debes agregar las propiedades pobladas de user y comments
-                };
-                return res.status(200).json(twitt)
+                return res.status(200).json(twittResponse);
             }
         } catch (error) {
             console.log(error)

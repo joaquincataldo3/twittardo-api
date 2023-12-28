@@ -24,16 +24,17 @@ export interface UserT {
 
 export interface TwittT {
     twitt: string,
-    image?: string | null,
-    image_url?: string | null,
-    user: string,
+    image?: string | null
+    image_url?: string | null
+    user: string
     comments?: string[]
-    favourites?: number,
+    favourites?: number
     commentsNumber: number
 }
 
 export interface TwittTPopulated extends TwittT {
-    user: UserT;
+    id: string
+    user: UserT
     comments: CommentT
 }
 
@@ -41,7 +42,7 @@ export interface TwittTPopulated extends TwittT {
 export interface CommentT {
     comment: string,
     user: string,
-    twittId: string,
+    twittCommented: string,
     favourites: number
 }
 

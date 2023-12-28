@@ -20,10 +20,12 @@ const controller = {
     },
     createComment: async (req: Request, res: Response) => {
         try {
+           
             const userId: string = req.params.userId;
             const twittId: string = req.params.twittId;
 
-            
+            console.log(req.body)
+
             if(!isValidObjectId(userId) || !isValidObjectId(twittId)){
                 return res.status(400).json({msg: 'Twitt o usuario id invalido'})
             }
@@ -31,7 +33,7 @@ const controller = {
             const commentData: CommentT = {
                 comment: req.body.comment,
                 user: userId,
-                twittId,
+                twittCommented: twittId,
                 favourites: 0
             }
 
@@ -48,6 +50,7 @@ const controller = {
             }, {
                 new: true
             })
+           
 
             const pushCommentInUser = await User.findByIdAndUpdate(userId, 
                 {
@@ -57,6 +60,7 @@ const controller = {
             }, {
                 new: true
             })
+            
 
             return res.status(200).json({newComment, pushCommentInTwitt, pushCommentInUser});
 
