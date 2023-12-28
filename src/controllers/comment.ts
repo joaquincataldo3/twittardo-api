@@ -13,32 +13,24 @@ const controller = {
             const comments = await Comment.find();
             return res.status(200).json(comments);
         } catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se buscaban los comentarios: ${error}` });
         }
 
     },
     createComment: async (req: Request, res: Response) => {
-        try {
-           
+        try { 
             const userId: string = req.params.userId;
             const twittId: string = req.params.twittId;
-
-            console.log(req.body)
-
             if(!isValidObjectId(userId) || !isValidObjectId(twittId)){
                 return res.status(400).json({msg: 'Twitt o usuario id invalido'})
             }
-
             const commentData: CommentT = {
                 comment: req.body.comment,
                 user: userId,
                 twittCommented: twittId,
                 favourites: 0
             }
-
             const newComment = await Comment.create(commentData);
-
             const pushCommentInTwitt = await Twitt.findByIdAndUpdate(twittId, 
                 {
                 $addToSet: { 
@@ -50,8 +42,6 @@ const controller = {
             }, {
                 new: true
             })
-           
-
             const pushCommentInUser = await User.findByIdAndUpdate(userId, 
                 {
                 $addToSet: { 
@@ -60,12 +50,8 @@ const controller = {
             }, {
                 new: true
             })
-            
-
             return res.status(200).json({newComment, pushCommentInTwitt, pushCommentInUser});
-
         } catch (error) {
-            console.log(error);
             return res.status(400).json({msg: `Problema mientras se creaba un comentario: ${error}`});
         }
     },
@@ -73,11 +59,9 @@ const controller = {
         try {
             const twittId = req.params.twittId;
             const userId = req.params.userId;
-
             if (!isValidObjectId(userId) || !isValidObjectId(twittId)) {
                 return res.status(400).json({ msg: 'Twitt o usuario id invalido' })
             }
-
             await Comment.findByIdAndUpdate(twittId,
                 { $inc: { favourites: 1 } },
                 { new: true });
@@ -90,29 +74,21 @@ const controller = {
                 }, {
                 new: true
             })
-
             return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' });
-
         } catch (error) {
             console.log(error)
             return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
         }
     },
     deleteComment: async (req: Request, res: Response) => {
-
         try {
             const commentIdToDelete: string = req.params.commentId;
-
             if(!isValidObjectId(commentIdToDelete)){
                 res.status(400).json({msg: 'Comentario id invalido'})
             }
-
             await Comment.findByIdAndRemove(commentIdToDelete);
-
             res.status(200).json(commentIdToDelete);
-
         } catch (error) {
-            console.log(error);
             res.status(400).json({msg: `Problema mientras se borraba un comentario: ${error}`});
         } 
     }

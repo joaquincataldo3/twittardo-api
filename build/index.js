@@ -25,12 +25,12 @@ app.use((0, express_session_1.default)({
     saveUninitialized: false,
     cookie: {
         maxAge: 1000 * 60 * 60,
-        sameSite: "none",
-        secure: false
+        sameSite: false,
+        secure: process.env.NODE_ENV == 'production' ? true : false
     }
 }));
 app.use((0, cors_1.default)({
-    origin: 'http://localhost:5173',
+    origin: process.env.REACT_APP_URL,
     credentials: true
 }));
 app.use(express_1.default.json());

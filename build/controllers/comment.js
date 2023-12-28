@@ -23,7 +23,6 @@ const controller = {
             return res.status(200).json(comments);
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se buscaban los comentarios: ${error}` });
         }
     }),
@@ -37,7 +36,7 @@ const controller = {
             const commentData = {
                 comment: req.body.comment,
                 user: userId,
-                twittId,
+                twittCommented: twittId,
                 favourites: 0
             };
             const newComment = yield comment_1.default.create(commentData);
@@ -61,7 +60,6 @@ const controller = {
             return res.status(200).json({ newComment, pushCommentInTwitt, pushCommentInUser });
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se creaba un comentario: ${error}` });
         }
     }),
@@ -97,7 +95,6 @@ const controller = {
             res.status(200).json(commentIdToDelete);
         }
         catch (error) {
-            console.log(error);
             res.status(400).json({ msg: `Problema mientras se borraba un comentario: ${error}` });
         }
     })

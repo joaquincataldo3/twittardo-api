@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const twitt_1 = __importDefault(require("../database/models/twitt"));
+const comment_1 = __importDefault(require("../database/models/comment"));
 const user_1 = __importDefault(require("../database/models/user"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = require("mongoose");
@@ -27,7 +28,7 @@ const controller = {
             const twittsResponse = yield twitt_1.default
                 .find()
                 .sort({ createdAt: -1 })
-                .skip(twittPerPage * pageNumber)
+                .skip(twittPerPage * (pageNumber - 1))
                 .limit(twittPerPage)
                 .select('-password -email')
                 .populate('user', '-password -email')
@@ -58,20 +59,9 @@ const controller = {
                 twitt.user.image_url = url;
             }
             ;
-            const twitts = twittsResponse.map((twitt) => ({
-                _id: twitt._id,
-                twitt: twitt.twitt,
-                user: twitt.user,
-                image: twitt.image,
-                image_url: twitt.image_url,
-                comments: twitt.comments,
-                favourites: twitt.favourites,
-                commentsNumber: twitt.commentsNumber,
-            }));
-            return res.status(200).json(twitts);
+            return res.status(200).json(twittsResponse);
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se buscaban los twitts: ${error}` });
         }
     }),
@@ -84,8 +74,8 @@ const controller = {
             const twittResponse = yield twitt_1.default
                 .findById(twittId)
                 .select('-password -email')
-                .populate('user', '-password -email')
-                .populate('comments');
+                .populate({ path: 'user', select: '-password -email' })
+                .populate({ path: 'comments', model: 'Comment' });
             if (!twittResponse) {
                 return res.status(404).json({ msg: "Twitt no encontrado" });
             }
@@ -103,21 +93,10 @@ const controller = {
                 folder = 'avatars';
                 let url = yield (0, s3ConfigCommands_1.handleGetCommand)(twittResponse.user.avatar, folder);
                 twittResponse.user.image_url = url;
-                const twitt = {
-                    twitt: twittResponse.twitt,
-                    image: twittResponse.image,
-                    user: twittResponse.user,
-                    image_url: twittResponse.image_url,
-                    comments: twittResponse.comments,
-                    favourites: twittResponse.favourites,
-                    commentsNumber: twittResponse.commentsNumber,
-                    // Aquí debes agregar las propiedades pobladas de user y comments
-                };
-                return res.status(200).json(twitt);
+                return res.status(200).json(twittResponse);
             }
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se buscaba un twitt en particular: ${error}` });
         }
     }),
@@ -139,8 +118,26 @@ const controller = {
             return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' });
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
+        }
+    }),
+    unfavOneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const twittId = req.params.twittId;
+            const userId = req.params.userId;
+            if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
+                return res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+            }
+            yield twitt_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: -1 } }, { new: true });
+            yield user_1.default.findByIdAndUpdate(userId, {
+                $pull: {
+                    favourites: twittId,
+                },
+            }, { new: true });
+            return res.status(200).json({ msg: 'Desfavorecido satisfactoriamente' });
+        }
+        catch (error) {
+            return res.status(400).json({ msg: `Problema mientras se desfavorecía un twitt: ${error}` });
         }
     }),
     createTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -174,7 +171,6 @@ const controller = {
             return res.status(200).json(newTwitt);
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se creaba un twitt: ${error}` });
         }
     }),
@@ -184,11 +180,15 @@ const controller = {
             if (!(0, mongoose_1.isValidObjectId)(twittIdToDelete)) {
                 return res.status(400).json({ msg: 'Twitt id invalido' });
             }
-            yield twitt_1.default.findByIdAndRemove(twittIdToDelete);
+            const deletedDocument = yield twitt_1.default.findByIdAndRemove(twittIdToDelete);
+            if (deletedDocument) {
+                const folder = 'twitts';
+                yield (0, s3ConfigCommands_1.handleDeleteCommand)(deletedDocument.image, folder);
+            }
+            yield comment_1.default.deleteMany({ twittCommented: twittIdToDelete });
             return res.status(200).json(twittIdToDelete);
         }
         catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se borraba un twitt: ${error}` });
         }
     })

@@ -1,10 +1,11 @@
 import Twitt from '../database/models/twitt';
+import Comment from '../database/models/comment';
 import User from '../database/models/user';
 import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
 import { TwittT } from '../types';
-import { handlePutCommand, handleGetCommand } from '../utils/s3ConfigCommands';
+import { handlePutCommand, handleGetCommand, handleDeleteCommand } from '../utils/s3ConfigCommands';
 
 dotenv.config()
 
@@ -50,7 +51,6 @@ const controller = {
 
             return res.status(200).json(twittsResponse);
         } catch (error) {
-            console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaban los twitts: ${error}` })
         }
 
@@ -88,7 +88,6 @@ const controller = {
                 return res.status(200).json(twittResponse);
             }
         } catch (error) {
-            console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaba un twitt en particular: ${error}` })
         }
 
@@ -118,7 +117,6 @@ const controller = {
             return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' });
 
         } catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
         }
     },
@@ -150,7 +148,6 @@ const controller = {
             return res.status(200).json({ msg: 'Desfavorecido satisfactoriamente' });
 
         } catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se desfavorecía un twitt: ${error}` });
         }
     },
@@ -192,7 +189,6 @@ const controller = {
             return res.status(200).json(newTwitt);
 
         } catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se creaba un twitt: ${error}` });
         }
     },
@@ -200,21 +196,19 @@ const controller = {
 
         try {
             const twittIdToDelete = req.params.twittIdToDelete;
-
             if (!isValidObjectId(twittIdToDelete)) {
                 return res.status(400).json({ msg: 'Twitt id invalido' })
             }
-
-            await Twitt.findByIdAndRemove(twittIdToDelete);
-
+            const deletedDocument = await Twitt.findByIdAndRemove(twittIdToDelete);
+            if(deletedDocument){
+                const folder = 'twitts';
+                await handleDeleteCommand(deletedDocument.image, folder)
+            }
+            await Comment.deleteMany({twittCommented: twittIdToDelete});
             return res.status(200).json(twittIdToDelete);
-
         } catch (error) {
-            console.log(error);
             return res.status(400).json({ msg: `Problema mientras se borraba un twitt: ${error}` });
         }
-
-
 
     }
 }

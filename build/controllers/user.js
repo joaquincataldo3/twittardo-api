@@ -161,7 +161,6 @@ const controller = {
             const folder = "avatars";
             let imageUrl = yield (0, s3ConfigCommands_1.handleGetCommand)(userToVerify.avatar, folder);
             userVerified.image_url = imageUrl;
-            console.log(userVerified);
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
             req.session.userLogged = userVerified;
