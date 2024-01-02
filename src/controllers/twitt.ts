@@ -64,16 +64,23 @@ const controller = {
             const twittResponse = await Twitt
                 .findById(twittId)
                 .select('-password -email')
-                .populate({path: 'user', select: '-password -email'})
-                .populate({path: 'comments', model: 'Comment'})
+                .populate({ path: 'user', select: '-password -email' })
+                .populate({ path: 'comments', model: 'Comment' })
             if (!twittResponse) {
                 return res.status(404).json({ msg: "Twitt no encontrado" })
             } else {
-                if (twittResponse.comments.length > 0) {
-                    await twittResponse.populate('comments.user')
-                }
                 let folder;
-
+                if (twittResponse.comments.length > 0) {
+                    for (const comment of twittResponse.comments) {
+                        await comment.populate('user', '-password');
+                    }
+                    folder = "avatars";
+                    for (let i = 0; i < twittResponse.comments.length; i++) {
+                        const user = twittResponse.comments[i].user
+                        let url = await handleGetCommand(user.avatar, folder);
+                        user.image_url = url;
+                    }
+                }
                 if (twittResponse.image) {
                     folder = 'twitts';
                     let url = await handleGetCommand(twittResponse.image, folder);
@@ -88,6 +95,7 @@ const controller = {
                 return res.status(200).json(twittResponse);
             }
         } catch (error) {
+            console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaba un twitt en particular: ${error}` })
         }
 
@@ -131,7 +139,7 @@ const controller = {
 
             await Twitt.findByIdAndUpdate(
                 twittId,
-                { $inc: { favourites: -1 } }, 
+                { $inc: { favourites: -1 } },
                 { new: true }
             );
 
@@ -200,11 +208,11 @@ const controller = {
                 return res.status(400).json({ msg: 'Twitt id invalido' })
             }
             const deletedDocument = await Twitt.findByIdAndRemove(twittIdToDelete);
-            if(deletedDocument){
+            if (deletedDocument) {
                 const folder = 'twitts';
                 await handleDeleteCommand(deletedDocument.image, folder)
             }
-            await Comment.deleteMany({twittCommented: twittIdToDelete});
+            await Comment.deleteMany({ twittCommented: twittIdToDelete });
             return res.status(200).json(twittIdToDelete);
         } catch (error) {
             return res.status(400).json({ msg: `Problema mientras se borraba un twitt: ${error}` });

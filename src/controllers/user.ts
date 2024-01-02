@@ -56,6 +56,7 @@ const controller = {
             const userToFind = await User
                 .findById(id)
                 .populate('twitts')
+                .populate('favourites')
                 .populate('comments')
                 .select('-password')
             if (userToFind === null) {
@@ -64,7 +65,8 @@ const controller = {
             let userFound = userToFind;
             
             let folder = 'twitts';
-            for (let twitt of userFound.twitts) {
+            for(let i = 0; i < userFound.twitts.length; i++) {
+                const twitt = userFound.twitts[i];
                 if (twitt.image) {
                     let url = await handleGetCommand(twitt.image, folder);
                     twitt.image_url = url;
@@ -73,36 +75,18 @@ const controller = {
                 folder = 'avatars';
                 let url = await handleGetCommand(twitt.user.avatar, folder);
                 twitt.user.image_url = url;
-            }
-
-            for(let comment of userFound.comments){
+            } 
+            for(let i = 0; i < userFound.comments.length; i++) {
+                const comment = userFound.comments[i];
+                await comment
+                .populate('twittCommented')
                 await comment
                 .populate('user')
-                .populate('twittCommented')
             }
-
             
-            for(let twitt of userFound.comments.twittCommented){
-                await twitt
-                .populate('user')
-            }
-        
             let url = await handleGetCommand(userFound.avatar, folder);
             userFound.image_url = url;
-            let oneUser: UserT = {
-                _id: userFound._id as string,
-                username: userFound.username,
-                email: userFound.email,
-                avatar: userFound.avatar,
-                isAdmin: userFound.isAdmin,
-                favourites: userFound.favourites,
-                twitts: userFound.twitts,
-                comments: userFound.comments,
-                followers: userFound.followers,
-                following: userFound.following,
-                image_url: userFound.image_url,
-            }
-            return res.status(200).json(oneUser)
+            return res.status(200).json(userFound)
         } catch (error) {
             console.log(error)
             return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })

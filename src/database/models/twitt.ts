@@ -24,7 +24,7 @@ const twittSchema: Schema = new Schema ({
     commentsNumber: {
         type: Number
     },
-    favourites: {type: Number},
+    favouritesNumber: {type: Number},
     createdAt: {
         type: Date,
         default: () => Date.now(),
