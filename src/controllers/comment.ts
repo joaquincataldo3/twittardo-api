@@ -8,15 +8,6 @@ import { CommentT } from '../types'
 
 
 const controller = {
-    allComments: async (_req: Request, res: Response) => {
-        try {
-            const comments = await Comment.find();
-            return res.status(200).json(comments);
-        } catch (error) {
-            return res.status(400).json({ msg: `Problema mientras se buscaban los comentarios: ${error}` });
-        }
-
-    },
     createComment: async (req: Request, res: Response) => {
         try { 
             const userId: string = req.params.userId;

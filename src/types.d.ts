@@ -1,3 +1,4 @@
+import { Response } from 'express';
 import { Model, Document } from 'mongoose'
 
 // Extiende el tipo SessionData para incluir userLoggedId
@@ -7,14 +8,13 @@ declare module 'express-session' {
     }
   }
 
-export interface UserT {
+export interface IUser {
     _id?: string,
     email: string,
     username: string,
     password?: string,
     isAdmin: number,
-    avatar: string,
-    image_url: string,
+    image: Image
     favourites?: TwittT[] | [],
     twitts?: TwittT[] | [],
     followers?: UserToFront[] | [],
@@ -22,46 +22,76 @@ export interface UserT {
     comments?: CommentT[] | []
 }
 
-export interface TwittT {
+export interface ITwitt {
     twitt: string,
-    image?: string | null
-    image_url?: string | null
+    image?: Image
     user: string
     comments?: string[]
     favourites?: number
     commentsNumber: number
 }
 
-export interface TwittTPopulated extends TwittT {
+export interface ITwittPopulated extends ITwitt {
     id: string
     user: UserT
     comments: CommentT
 }
 
 
-export interface CommentT {
+export interface IComment {
     comment: string,
     user: string,
     twittCommented: string,
     favourites: number
 }
 
-export interface SchemaNameT {
+export interface ISchemaName {
     User: string,
     Admin: string,
     Twitt: string,
     Comment: string
 }
 
-export type PORT = string | number
-
-export interface LoginUser {
+export interface ILoginUser {
     email: string,
     password: string
 }
 
-export interface RegisterUser {
+export interface IRegisterUser {
     email: string,
     username: string,
     password: string
 }
+
+export interface IImage {
+    secure_url: string
+    public_id: string
+}
+
+export interface IDefaultAvatarImage {
+    default_secure_url: string
+    default_public_id: string
+}
+
+export interface ICloudinaryFolders {
+    twittsFolder: string
+    avatarsFolder: string
+}
+
+export interface ModelNames {
+    Comment: string
+    Twitt: string
+    User: string
+    Favourite: string
+}
+
+export interface ModelPaths {
+    CommentPath: string
+    TwittPath: string
+    UserPath: string
+    FavouritePath: string
+    TwittCommentedPath: string
+}
+
+export type PORT = string | number
+

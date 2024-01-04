@@ -1,12 +1,15 @@
 
-import User from '../database/models/user'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
-import { LoginUser, RegisterUser, UserT } from '../types'
-import { isValidObjectId } from 'mongoose'
-import { Request, Response } from 'express'
-import { handlePutCommand, handleDeleteCommand, handleGetCommand } from '../utils/s3ConfigCommands'
+import User from '../database/models/user';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import { ILoginUser, IRegisterUser, IUser, IImage } from '../types';
+import { isValidObjectId } from 'mongoose';
+import { Request, Response } from 'express';
+import { modelPaths } from '../utils/constants/modelsPath';
+import { folderNames, handleDeleteImage, handleUploadImage } from '../utils/util-functions/cloudinaryConfig';
+import { defaultAvatarPaths } from '../utils/constants/defaultAvatar';
+
 
 dotenv.config();
 
@@ -16,97 +19,159 @@ declare module 'express' { // declaration merging
     }
 }
 
+const { CommentPath, UserPath, FavouritePath, TwittPath, TwittCommentedPath } = modelPaths;
+const { default_secure_url, default_public_id } = defaultAvatarPaths;
+const { avatarsFolder} = folderNames;
+
 const controller = {
-    allUsers: async (_req: Request, res: Response) => {
-        try {
-            const usersResponse = await User
-                .find()
-                .select('-_id -password -email')
-            const users: UserT[] = usersResponse.map((user: any) => ({
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                avatar: user.avatar,
-                image_url: user.image_url,
-                isAdmin: user.isAdmin,
-                favourites: user.favourites,
-                twitts: user.twitts,
-                followers: user.followers,
-                following: user.following,
-                comments: user.comments
-            }));
-            // aca voy por cada imagen y hago un getobjectcommand para obtener el url
-            const folder = 'avatars';
-            for (let i = 0; i < users.length; i++) {
-                let user = users[i];
-                let url = await handleGetCommand(user.avatar, folder);
-                user.image_url = url;
-            };
-            return res.status(200).json(users);
-        } catch (error) {
-            return res.status(400).json({ msg: `Problema mientras se buscaban los usuarios: ${error}` })
-        }
-    },
-    oneUser: async (req: Request, res: Response) => {
+    oneUser: async (req: Request, res: Response): Promise<void> => {
         try {
             const id: string = req.params.userId;
+            const limitFirstFetch = 5;
             if (!isValidObjectId(id)) {
-                return res.status(400).json({ msg: 'Id de usuario invalido' });
+                res.status(400).json({ msg: 'Id de usuario invalido' });
             }
+            // busco el usuario y traigo los 5 primeros resultados de cada campo
             const userToFind = await User
                 .findById(id)
-                .populate('twitts')
-                .populate('favourites')
-                .populate('comments')
+                .populate({
+                    path: TwittPath,
+                    options: {
+                        limit: limitFirstFetch,
+                        sort: { createdAt: -1 }
+                    }
+                })
+                .populate({
+                    path: FavouritePath,
+                    options: {
+                        limit: limitFirstFetch,
+                        sort: { createdAt: -1 }
+                    },
+                    populate: {
+                        path: UserPath
+                    }
+                })
+                .populate({
+                    path: CommentPath,
+                    options: {
+                        limit: limitFirstFetch,
+                        sort: { createdAt: -1 }
+                    },
+                    populate: {
+                        path: TwittCommentedPath,
+                        populate: {
+                            path: UserPath,
+                            select: 'username'
+                        }
+                    }
+                })
                 .select('-password')
-            if (userToFind === null) {
-                return res.status(404).json({ msg: 'Usuario no encontrado' });
+            if (!userToFind) {
+                res.status(404).json({ msg: 'El usuario no fue encontrado' })
             }
             let userFound = userToFind;
-            
-            let folder = 'twitts';
-            for(let i = 0; i < userFound.twitts.length; i++) {
-                const twitt = userFound.twitts[i];
-                if (twitt.image) {
-                    let url = await handleGetCommand(twitt.image, folder);
-                    twitt.image_url = url;
-                }
-                await twitt.populate('user');
-                folder = 'avatars';
-                let url = await handleGetCommand(twitt.user.avatar, folder);
-                twitt.user.image_url = url;
-            } 
-            for(let i = 0; i < userFound.comments.length; i++) {
-                const comment = userFound.comments[i];
-                await comment
-                .populate('twittCommented')
-                await comment
-                .populate('user')
-            }
-            
-            let url = await handleGetCommand(userFound.avatar, folder);
-            userFound.image_url = url;
-            return res.status(200).json(userFound)
+            res.status(200).json(userFound)
         } catch (error) {
             console.log(error)
-            return res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
+            res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
         }
 
     },
-    follow: async (req: Request, res: Response) => {
+    getCommentsByUser: async (req: Request, res: Response): Promise<void> => {
+        const userId: string = req.params.userId;
+        const page: string = String(req.query.p);
+        const pageNumber: number = Number(page);
+        const commentsByPage: number = 5;
+        if (isNaN(pageNumber) || pageNumber < 1) {
+            res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
+        }
+        const userToFind = await User
+            .findById(userId)
+            .populate({
+                path: CommentPath,
+                options: {
+                    skip: (pageNumber - 1) * commentsByPage,
+                    limit: commentsByPage,
+                    sort: { createdAt: -1 }
+                },
+                populate: {
+                    path: TwittCommentedPath,
+                    populate: {
+                        path: UserPath,
+                        select: 'username'
+                    }
+                }
+            });
+        if (!userToFind) {
+            res.status(404).json({ msg: 'El usuario no fue encontrado' })
+        }
+        const user = userToFind;
+        res.status(200).json(user);
+    },
+    getTwittsByUser: async (req: Request, res: Response): Promise<void> => {
+        const userId: string = req.params.userId;
+        const page: string = String(req.query.p);
+        const pageNumber: number = Number(page);
+        const commentsByPage: number = 5;
+        if (isNaN(pageNumber) || pageNumber < 1) {
+            res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
+        };
+        const userToFind = await User
+            .findById(userId)
+            .populate({
+                path: TwittPath,
+                options: {
+                    skip: (pageNumber - 1) * commentsByPage,
+                    limit: commentsByPage,
+                    sort: { createdAt: -1 }
+                }
+            });
+        if (!userToFind) {
+            res.status(404).json({ msg: 'El usuario no fue encontrado' })
+        }
+        res.status(200).json(userToFind);
+    },
+    getFavouritesByUser: async (req: Request, res: Response): Promise<void> => {
+        const userId: string = req.params.userId;
+        const page: string = String(req.query.p);
+        const pageNumber: number = Number(page);
+        const commentsByPage: number = 5;
+        if (isNaN(pageNumber) || pageNumber < 1) {
+            res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
+        };
+        const userToFind = await User
+            .findById(userId)
+            .populate({
+                path: FavouritePath,
+                options: {
+                    skip: (pageNumber - 1) * commentsByPage,
+                    limit: commentsByPage,
+                    sort: { createdAt: -1 }
+                },
+                populate: {
+                    path: UserPath
+                }
+            });
+        if (!userToFind) {
+            res.status(404).json({ msg: 'El usuario no fue encontrado' })
+        }
+        const userFound = userToFind;
+        res.status(200).json(userFound);
+    },
+    follow: async (req: Request, res: Response): Promise<void> => {
         try {
             const userBeingFollowedId: string = req.params.userBFId;
             const userWantingToFollowId: string = req.params.userWFId;
 
             if (!isValidObjectId(userBeingFollowedId) || !isValidObjectId(userWantingToFollowId)) {
-                return res.status(400).json({ msg: 'Id de usuarios invalidos' })
+                res.status(400).json({ msg: 'Id de usuarios invalidos' })
             }
 
             const getUserBeingFollowed = await User.findById(userBeingFollowedId);
             const getUserWantingToFollow = await User.findById(userWantingToFollowId);
 
             if (!getUserBeingFollowed || !getUserWantingToFollow) {
-                return res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' })
+                res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' })
             }
 
 
@@ -121,197 +186,150 @@ const controller = {
                 { $addToSet: { following: userBeingFollowedId } },
                 { new: true }
             );
-
-
-            return res.status(201).json({ userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated })
-
+            res.status(201).json({ userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated })
         } catch (error) {
-            return res.status(400).json({ msg: 'Error mientras se seguía al usuario' })
+            res.status(500).json({ msg: 'Error mientras se seguía al usuario' })
         }
     },
-    processLogin: (async (req: Request, res: Response) => {
+    processLogin: (async (req: Request, res: Response): Promise<void> => {
         try {
-            const { password, email }: LoginUser = req.body
+            const { password, email }: ILoginUser = req.body
             const secretKey = process.env.JWT_KEY!
 
             if (!password || !email) {
-                return res.status(400).json({ msg: 'Por favor completar los campos solicitados' })
+                res.status(400).json({ msg: 'Por favor completar los campos solicitados' })
             }
 
             const verifyEmail = await User.findOne({ email })
-
             if (!verifyEmail) {
-                return res.status(404).json({ msg: 'Credenciales invalidas' })
+                res.status(404).json({ msg: 'Credenciales invalidas' })
             } // user could be null
             const userToVerify = verifyEmail
-            const verifyPassword = await bcrypt.compare(password, userToVerify.password)
+            const verifyPassword = await bcrypt.compare(password, userToVerify?.password)
             if (!verifyPassword) {
-                return res.status(404).json({ msg: 'Credenciales invalidas' })
+                res.status(404).json({ msg: 'Credenciales invalidas' })
             }
-            let userVerified: UserT = {
-                _id: verifyEmail._id as string,
-                username: verifyEmail.username,
-                email: verifyEmail.email,
-                avatar: verifyEmail.avatar,
-                isAdmin: verifyEmail.isAdmin,
-                favourites: verifyEmail.favourites,
-                twitts: verifyEmail.twitts,
-                followers: verifyEmail.followers,
-                following: verifyEmail.following,
-                comments: verifyEmail.comments,
-                image_url: ''
-            }
-            const folder = "avatars";
-            let imageUrl = await handleGetCommand(userToVerify.avatar, folder);
-            userVerified.image_url = imageUrl;
+            const userVerified = userToVerify;
             const token = jwt.sign({ ...userVerified }, secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
             req.session.userLogged = userVerified;
-
-            return res.status(200).json({ userVerified, token })
-
+            res.status(200).json({ userVerified, token })
         } catch (error) {
-            console.log(error)
-            return res.status(400).json({ msg: `Problema mientras se logueaba al usuario: ${error}` })
+            res.status(500).json({ msg: `Problema mientras se logueaba al usuario: ${error}` })
         }
 
     }),
-    register: (async (req: Request, res: Response) => {
+    register: (async (req: Request, res: Response): Promise<void> => {
         try {
-            const { email, username, password }: RegisterUser = req.body
+            const { email, username, password }: IRegisterUser = req.body
             const avatar = req.file as Express.Multer.File
 
             if (!email || !username || !password) {
-                return res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
+                res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
             }
 
             const emailAlreadyInDb = await User.find({ email })
 
             if (emailAlreadyInDb.length > 0) {
-                return res.status(409).json({ msg: 'Email ya en uso' })
+                res.status(409).json({ msg: 'Email ya en uso' })
             }
 
             const usernameAlreadyInDb = await User.find({ username })
 
             if (usernameAlreadyInDb.length > 0) {
-                return res.status(409).json({ msg: 'Nombre de usuario ya en uso' })
+                res.status(409).json({ msg: 'Nombre de usuario ya en uso' })
             }
 
             const hashPassword = await bcrypt.hash(password, 10)
 
-            let randomName = null;
-            const folder = 'avatars';
+            let result: IImage;
             if (avatar) {
-                randomName = await handlePutCommand(avatar, folder);
+                result = await handleUploadImage(avatar.path, avatarsFolder);
             } else {
-                randomName = 'default_avatar.jpg';
+                result = {
+                    secure_url: default_secure_url,
+                    public_id: default_public_id
+                }
             }
 
-            let newUserData: UserT = {
+            let newUserData: IUser = {
                 email,
                 username,
                 password: hashPassword,
                 isAdmin: 0,
-                avatar: randomName,
-                image_url: ''
+                image: result
             }
 
             let newUser = await User.create(newUserData)
-            return res.status(201).json(newUser);
+            res.status(201).json(newUser);
         } catch (error) {
-            return res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
+            res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
         }
 
     }),
-    checkSession: async (req: Request, res: Response) => {
+    checkSession: async (req: Request, res: Response): Promise<void> => {
         const user = req.session.userLogged
-
         if (user) {
-            return res.status(200).json({ loggedIn: true, user })
+            res.status(200).json({ loggedIn: true, user })
         } else {
-            return res.status(200).json({ loggedIn: false })
+            res.status(200).json({ loggedIn: false })
         }
 
     },
-    checkCookie: async (req: Request, res: Response) => {
+    checkCookie: async (req: Request, res: Response): Promise<void> => {
         const userAccessToken = req.cookies.user_access_token;
         if (userAccessToken) {
             const userToFind = await User
                 .findById(req.user._id)
                 .populate('twitts')
             if (!userToFind) {
-                return res.status(404).json({ msg: "Usuario no encontrado" })
+                res.status(404).json({ msg: "Usuario no encontrado" })
             }
-            const folder = 'avatars';
-            let url = await handleGetCommand(userToFind.avatar, folder);
-            userToFind.image_url = url;
             const userFound = userToFind
-            let oneUser: UserT = {
-                _id: userFound._id as string,
-                username: userFound.username,
-                email: userFound.email,
-                avatar: userFound.avatar,
-                isAdmin: userFound.isAdmin,
-                favourites: userFound.favourites,
-                twitts: userFound.twitts,
-                followers: userFound.followers,
-                following: userFound.following,
-                image_url: userFound.image_url,
-                comments: userFound.comments
-            }
-            return res.status(200).json({ loggedIn: true, user: oneUser })
+            res.status(200).json({ loggedIn: true, user: userFound })
         }
         else {
-            return res.status(200).json({ loggedIn: false })
+            res.status(200).json({ loggedIn: false })
         }
     },
-    updateUser: async (req: Request, res: Response) => {
+    updateUser: async (req: Request, res: Response): Promise<void> => {
         try {
             const userId: string = req.params.userId;
-
             if (!isValidObjectId(userId)) {
-                return res.status(400).json({ msg: 'Id de usuario invalido' })
+                res.status(400).json({ msg: 'Id de usuario invalido' })
             }
-
             const userToFind = await User.findById(userId)
-
             if (!userToFind) {
-                return res.status(404).json({ msg: 'Usuario no encontrado' })
+                res.status(404).json({ msg: 'Usuario no encontrado' })
             } else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
                 const bodyAvatar = req.file;
-
-                let randomName: string;
-                let folder = 'avatars';
-                if (user.avatar && bodyAvatar) {
-                    await handleDeleteCommand(user.avatar, folder);
-                    randomName = await handlePutCommand(bodyAvatar, folder);
-                } else if (!user.avatar && bodyAvatar) {
-                    randomName = await handlePutCommand(bodyAvatar, folder);
+                let result: IImage;
+                await handleDeleteImage(user.avatar);
+                if (bodyAvatar) {
+                    result = await handleUploadImage(bodyAvatar.path, avatarsFolder);
                 } else {
-                    const defAvatar = 'default_avatar.jpg';
-                    await handleDeleteCommand(user.avatar, folder);
-                    randomName = await handlePutCommand(defAvatar, folder)
+                    result = {
+                        secure_url: default_secure_url,
+                        public_id: default_public_id
+                    }
                 }
-
-                const dataToUpdate: UserT = {
+                const dataToUpdate: IUser = {
                     username: req.body.username ? req.body.username : user.username,
                     email: req.body.email ? req.body.email : user.email,
                     password: req.body.password ? req.body.password : user.password,
                     isAdmin: 0,
-                    avatar: randomName,
-                    image_url: ''
+                    image: result
                 }
 
                 const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })
 
-                return res.status(200).json(updatedUser)
+                res.status(200).json(updatedUser)
             }
 
 
         } catch (error) {
-            console.log(error)
-            return res.status(400).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
+            res.status(500).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
         }
     },
     convertUserToAdmin: async (req: Request, res: Response) => {
@@ -349,24 +367,15 @@ const controller = {
     deleteUser: async (req: Request, res: Response) => {
         try {
             const userId: string = req.params.userId
-
             if (!isValidObjectId(userId)) {
                 return res.status(400).json({ msg: 'Id de usuario invalido' });
             }
-
             const userToDelete = await User.findByIdAndRemove(userId);
-
             if (userToDelete == null) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
-
-            if (userToDelete.avatar) {
-                const folder = 'avatars';
-                await handleDeleteCommand(userToDelete.avatar, folder);
-            }
-
+            await handleDeleteImage(userToDelete.image.public_id);
             return res.status(200).json(userId)
-
         } catch (error) {
             console.log(error)
             return res.status(400).json({ msg: `Problema mientras se eliminaba el usuario: ${error}` })

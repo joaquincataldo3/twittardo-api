@@ -1,14 +1,17 @@
 import mongoose from "mongoose"
 import { Schema, Types} from "mongoose"
+import { modelsName } from "../../utils/constants/modelsName"
 
-const commentSchema: Schema =new Schema  ({
+const {User, Twitt} = modelsName;
+
+const commentSchema: Schema = new Schema({
     comment: {
         type: String,
         required: true
     },
     user: {
         type: Types.ObjectId,
-        ref: 'User', 
+        ref: User, 
         required: true
     },
     favourites: {
@@ -16,7 +19,7 @@ const commentSchema: Schema =new Schema  ({
     },
     twittCommented: {
         type: Types.ObjectId,
-        ref: 'Twitt', 
+        ref: Twitt, 
         required: true
     }
 })

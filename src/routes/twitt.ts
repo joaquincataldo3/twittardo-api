@@ -7,7 +7,7 @@ import imageUpload from '../middlewares/imageUpload'
 const router = express.Router()
 
 
-router.get('/all', twittController.allTwitts);
+router.get('/all/:userId', twittController.allTwitts);
 router.get('/:twittId',  twittController.oneTwitt);
 
 router.post('/:userId/create', verifyToken, verifyUserOrAdmin, imageUpload.single('image'), twittController.createTwitt);

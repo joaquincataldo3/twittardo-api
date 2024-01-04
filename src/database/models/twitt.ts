@@ -1,5 +1,8 @@
-import mongoose from "mongoose"
-import { Schema, Types} from "mongoose"
+import mongoose from "mongoose";
+import { Schema, Types} from "mongoose";
+import { modelsName } from "../../utils/constants/modelsName";
+
+const {User, Comment, Twitt} = modelsName
 
 const twittSchema: Schema = new Schema ({
     twitt: {
@@ -7,24 +10,22 @@ const twittSchema: Schema = new Schema ({
         required: true
     },
     image: {
-        type: String,
-    },
-    image_url: {
-        type: String
+        public_id: String,
+        secure_url: String
     },
     user: {
         type: Types.ObjectId,
-        ref: 'User', 
+        ref: User, 
         required: true
     },
     comments: [{
         type: Types.ObjectId,
-        ref: 'Comment'
+        ref: Comment
     }],
-    commentsNumber: {
-        type: Number
-    },
-    favouritesNumber: {type: Number},
+    favourites: [{
+        type: Types.ObjectId,
+        ref: Twitt
+    }],
     createdAt: {
         type: Date,
         default: () => Date.now(),

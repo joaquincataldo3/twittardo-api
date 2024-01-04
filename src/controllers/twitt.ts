@@ -1,11 +1,12 @@
 import Twitt from '../database/models/twitt';
 import Comment from '../database/models/comment';
+import Favourite from '../database/models/favourites';
 import User from '../database/models/user';
 import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
 import { TwittT } from '../types';
-import { handlePutCommand, handleGetCommand, handleDeleteCommand } from '../utils/s3ConfigCommands';
+import { handlePutCommand, handleGetCommand, handleDeleteCommand } from '../utils/util-functions/s3ConfigCommands';
 
 dotenv.config()
 
@@ -13,29 +14,26 @@ const controller = {
     allTwitts: async (req: Request, res: Response) => {
         try {
             const page: string = String(req.query.p);
-
             const pageNumber: number = Number(page)
-            const twittPerPage: number = 5;
-            const twittsResponse = await Twitt
-                .find()
-                .sort({ createdAt: -1 })
-                .skip(twittPerPage * (pageNumber - 1))
-                .limit(twittPerPage)
-                .select('-password -email')
-                .populate('user', '-password -email')
-                .populate('comments')
-            // two awaits bc we are populating comments and then user inside comments
-            if (twittsResponse) {
-                for (let twitt of twittsResponse) {
-                    if (twitt.comments.length > 0) {
-                        await twitt.populate('comments.user');
-                    }
-                }
+            if (isNaN(pageNumber) || pageNumber < 1) {
+                return res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
             }
+            const twittPerPage: number = 5;
+            const twitts = await Twitt
+                    .find(  )
+                    .sort({ createdAt: -1 })
+                    .skip(twittPerPage * (pageNumber - 1))
+                    .limit(twittPerPage)
+                    .select('-password -email')
+                    .populate('user', '-password -email')
+                    .populate('comments')
+            
+            await Twitt.populate(twitts, { path: 'comments.user' });
+
             // aca voy por cada imagen y hago un getobjectcommand para obtener el url
             let folder = 'twitts';
-            for (let i = 0; i < twittsResponse.length; i++) {
-                let twitt = twittsResponse[i];
+            for (let i = 0; i < twitts.length; i++) {
+                let twitt = twitts[i];
                 if (twitt.image) {
                     let url = await handleGetCommand(twitt.image, folder);
                     twitt.image_url = url;
@@ -43,17 +41,57 @@ const controller = {
             };
             // voy por cada imagen del usuario
             folder = 'avatars';
-            for (let i = 0; i < twittsResponse.length; i++) {
-                let twitt = twittsResponse[i];
+            for (let i = 0; i < twitts.length; i++) {
+                let twitt = twitts[i];
                 let url = await handleGetCommand(twitt.user.avatar, folder);
                 twitt.user.image_url = url;
             };
 
-            return res.status(200).json(twittsResponse);
+            return res.status(200).json(twitts);
         } catch (error) {
-            return res.status(400).json({ msg: `Problema mientras se buscaban los twitts: ${error}` })
+            return res.status(500).json({ msg: `Problema mientras se buscaban los twitts: ${error}` })
         }
 
+    },
+    allTwittsByUser: async (req: Request, res: Response) => {
+        try {
+            const page: string = String(req.query.p);
+            const pageNumber: number = Number(page)
+            if (isNaN(pageNumber) || pageNumber < 1) {
+                return res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
+            }
+            const twittPerPage: number = 5;
+            const userIdParam: string = req.params.userId;
+            const twitts = await Twitt
+                    .find({ user: userIdParam })
+                    .sort({ createdAt: -1 })
+                    .skip(twittPerPage * (pageNumber - 1))
+                    .limit(twittPerPage)
+                    .select('-password -email')
+                    .populate('user', '-password -email')
+                    .populate('comments')
+        
+            // aca voy por cada imagen y hago un getobjectcommand para obtener el url
+            let folder = 'twitts';
+            for (let i = 0; i < twitts.length; i++) {
+                let twitt = twitts[i];
+                if (twitt.image) {
+                    let url = await handleGetCommand(twitt.image, folder);
+                    twitt.image_url = url;
+                }
+            };
+            // voy por cada imagen del usuario
+            folder = 'avatars';
+            for (let i = 0; i < twitts.length; i++) {
+                let twitt = twitts[i];
+                let url = await handleGetCommand(twitt.user.avatar, folder);
+                twitt.user.image_url = url;
+            };
+
+            return res.status(200).json(twitts);
+        } catch (error) {
+            return res.status(500).json({ msg: `Problema mientras se buscaban los twitts: ${error}` })
+        }
     },
     oneTwitt: async (req: Request, res: Response) => {
         try {
@@ -109,14 +147,26 @@ const controller = {
                 return res.status(400).json({ msg: 'Twitt o usuario id invalido' })
             }
 
-            await Twitt.findByIdAndUpdate(twittId,
-                { $inc: { favourites: 1 } },
-                { new: true });
+            const favTwittToDb = {
+                user: userId,
+                twittFaved: twittId
+            }
+
+            const favourite = await Favourite.create(favTwittToDb);
+
+            await Twitt.findByIdAndUpdate(userId,
+                {
+                    $addToSet: {
+                        favourites: favourite._id
+                    },
+                }, {
+                new: true
+            })
 
             await User.findByIdAndUpdate(userId,
                 {
                     $addToSet: {
-                        favourites: twittId
+                        favourites: favourite._id
                     },
                 }, {
                 new: true
