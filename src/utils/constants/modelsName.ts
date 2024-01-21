@@ -1,8 +1,8 @@
-import { ModelNames } from "../interfaces/interfaces";
+import { IModelNames } from "../interfaces/interfaces"
 
-export const modelsName: ModelNames = {
-    Twitt: 'Twitt',
-    Comment: 'Comment',
-    User: 'User',
-    Favourite: 'Favourite'
+export const modelsName: IModelNames = {
+    TwittModel: 'Twitt',
+    CommentModel: 'Comment',
+    UserModel: 'User',
+    FavouriteModel: 'Favourite'
 }

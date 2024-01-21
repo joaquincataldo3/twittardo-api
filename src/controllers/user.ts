@@ -3,25 +3,20 @@ import User from '../database/models/user';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { ILoginUser, IRegisterUser, IUser, IImage } from '../types';
+import { ILoginUser, IRegisterUser, IUser, IImage } from '../utils/interfaces/interfaces';
 import { isValidObjectId } from 'mongoose';
 import { Request, Response } from 'express';
 import { modelPaths } from '../utils/constants/modelsPath';
-import { folderNames, handleDeleteImage, handleUploadImage } from '../utils/util-functions/cloudinaryConfig';
+import { folderNames, handleDeleteImage, handleUploadImage } from '../cloudinary/cloudinaryConfig';
 import { defaultAvatarPaths } from '../utils/constants/defaultAvatar';
-
+// user.ts
+/// <reference path="./express.d.ts" />
 
 dotenv.config();
 
-declare module 'express' { // declaration merging
-    interface Request {
-        user?: any;
-    }
-}
-
-const { CommentPath, UserPath, FavouritePath, TwittPath, TwittCommentedPath } = modelPaths;
+const { commentPath, userPath, favouritePath, twittPath, twittCommentedPath } = modelPaths;
 const { default_secure_url, default_public_id } = defaultAvatarPaths;
-const { avatarsFolder} = folderNames;
+const { avatarsFolder } = folderNames;
 
 const controller = {
     oneUser: async (req: Request, res: Response): Promise<void> => {
@@ -29,134 +24,164 @@ const controller = {
             const id: string = req.params.userId;
             const limitFirstFetch = 5;
             if (!isValidObjectId(id)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' });
+                res.status(500).json({ msg: 'Id de usuario invalido' });
+                return;
             }
             // busco el usuario y traigo los 5 primeros resultados de cada campo
             const userToFind = await User
                 .findById(id)
                 .populate({
-                    path: TwittPath,
+                    path: twittPath,
                     options: {
                         limit: limitFirstFetch,
                         sort: { createdAt: -1 }
                     }
                 })
                 .populate({
-                    path: FavouritePath,
+                    path: favouritePath,
                     options: {
                         limit: limitFirstFetch,
                         sort: { createdAt: -1 }
                     },
                     populate: {
-                        path: UserPath
+                        path: userPath
                     }
                 })
                 .populate({
-                    path: CommentPath,
+                    path: commentPath,
                     options: {
                         limit: limitFirstFetch,
                         sort: { createdAt: -1 }
                     },
                     populate: {
-                        path: TwittCommentedPath,
+                        path: twittCommentedPath,
                         populate: {
-                            path: UserPath,
+                            path: userPath,
                             select: 'username'
                         }
                     }
                 })
                 .select('-password')
             if (!userToFind) {
-                res.status(404).json({ msg: 'El usuario no fue encontrado' })
+                res.status(404).json({ msg: 'El usuario no fue encontrado' });
+                return;
             }
             let userFound = userToFind;
-            res.status(200).json(userFound)
+            res.status(200).json(userFound);
+            return;
         } catch (error) {
-            console.log(error)
-            res.status(400).json({ msg: `Problema mientras se buscaba el usuario especificado: ${error}` })
+            res.status(500).json({ msg: `Problema mientras se buscaba el usuario especificado` })
+            return;
         }
 
     },
     getCommentsByUser: async (req: Request, res: Response): Promise<void> => {
-        const userId: string = req.params.userId;
-        const page: string = String(req.query.p);
-        const pageNumber: number = Number(page);
-        const commentsByPage: number = 5;
-        if (isNaN(pageNumber) || pageNumber < 1) {
-            res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
-        }
-        const userToFind = await User
-            .findById(userId)
-            .populate({
-                path: CommentPath,
-                options: {
-                    skip: (pageNumber - 1) * commentsByPage,
-                    limit: commentsByPage,
-                    sort: { createdAt: -1 }
-                },
-                populate: {
-                    path: TwittCommentedPath,
+        try {
+            const userId: string = req.params.userId;
+            const page: string = String(req.query.p);
+            const pageNumber: number = Number(page);
+            const commentsByPage: number = 5;
+            if (isNaN(pageNumber) || pageNumber < 1) {
+                res.status(500).json({ msg: 'El número de página debe ser un número positivo.' });
+                return;
+            }
+            const userToFind = await User
+                .findById(userId)
+                .populate({
+                    path: commentPath,
+                    options: {
+                        skip: (pageNumber - 1) * commentsByPage,
+                        limit: commentsByPage,
+                        sort: { createdAt: -1 }
+                    },
                     populate: {
-                        path: UserPath,
-                        select: 'username'
+                        path: twittCommentedPath,
+                        populate: {
+                            path: userPath,
+                            select: 'username'
+                        }
                     }
-                }
-            });
-        if (!userToFind) {
-            res.status(404).json({ msg: 'El usuario no fue encontrado' })
+                });
+            if (!userToFind) {
+                res.status(404).json({ msg: 'El usuario no fue encontrado' });
+                return;
+            }
+            const user = userToFind;
+            res.status(200).json(user);
+            return;
+        } catch (error) {
+            res.status(500).json({ msg: `Problema mientras se buscaba los comentarios por usuario` })
+            return;
         }
-        const user = userToFind;
-        res.status(200).json(user);
+
     },
     getTwittsByUser: async (req: Request, res: Response): Promise<void> => {
-        const userId: string = req.params.userId;
-        const page: string = String(req.query.p);
-        const pageNumber: number = Number(page);
-        const commentsByPage: number = 5;
-        if (isNaN(pageNumber) || pageNumber < 1) {
-            res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
-        };
-        const userToFind = await User
-            .findById(userId)
-            .populate({
-                path: TwittPath,
-                options: {
-                    skip: (pageNumber - 1) * commentsByPage,
-                    limit: commentsByPage,
-                    sort: { createdAt: -1 }
-                }
-            });
-        if (!userToFind) {
-            res.status(404).json({ msg: 'El usuario no fue encontrado' })
+        try {
+            const userId: string = req.params.userId;
+            const page: string = String(req.query.p);
+            const pageNumber: number = Number(page);
+            const commentsByPage: number = 5;
+            if (isNaN(pageNumber) || pageNumber < 1) {
+                res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
+                return;
+            };
+            const userToFind = await User
+                .findById(userId)
+                .populate({
+                    path: twittPath,
+                    options: {
+                        skip: (pageNumber - 1) * commentsByPage,
+                        limit: commentsByPage,
+                        sort: { createdAt: -1 }
+                    }
+                });
+            if (!userToFind) {
+                res.status(404).json({ msg: 'El usuario no fue encontrado' });
+                return;
+            }
+            res.status(200).json(userToFind);
+            return;
+        } catch (error) {
+            res.status(500).json({ msg: `Problema mientras se buscaba los twitts por usuario` });
+            return;
         }
-        res.status(200).json(userToFind);
+
     },
     getFavouritesByUser: async (req: Request, res: Response): Promise<void> => {
-        const userId: string = req.params.userId;
+        try {
+            const userId: string = req.params.userId;
         const page: string = String(req.query.p);
         const pageNumber: number = Number(page);
         const commentsByPage: number = 5;
         if (isNaN(pageNumber) || pageNumber < 1) {
             res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
+            return;
         };
         const userToFind = await User
             .findById(userId)
             .populate({
-                path: FavouritePath,
+                path: favouritePath,
                 options: {
                     skip: (pageNumber - 1) * commentsByPage,
                     limit: commentsByPage,
                     sort: { createdAt: -1 }
                 },
                 populate: {
-                    path: UserPath
+                    path: userPath
                 }
             });
         if (!userToFind) {
-            res.status(404).json({ msg: 'El usuario no fue encontrado' })
+            res.status(404).json({ msg: 'El usuario no fue encontrado' });
+            return;
         }
         const userFound = userToFind;
         res.status(200).json(userFound);
+        return;
+        } catch (error) {
+            res.status(500).json({ msg: `Problema mientras se buscaba los favoritos por usuario` });
+            return;
+        }
+        
     },
     follow: async (req: Request, res: Response): Promise<void> => {
         try {
@@ -195,27 +220,31 @@ const controller = {
         try {
             const { password, email }: ILoginUser = req.body
             const secretKey = process.env.JWT_KEY!
-
             if (!password || !email) {
-                res.status(400).json({ msg: 'Por favor completar los campos solicitados' })
+                res.status(400).json({ msg: 'Por favor completar los campos solicitados' });
+                return;
             }
-
-            const verifyEmail = await User.findOne({ email })
+            const verifyEmail = await User.findOne({ email });
             if (!verifyEmail) {
-                res.status(404).json({ msg: 'Credenciales invalidas' })
+                res.status(404).json({ msg: 'Credenciales invalidas' });
+                return;
             } // user could be null
             const userToVerify = verifyEmail
-            const verifyPassword = await bcrypt.compare(password, userToVerify?.password)
+            const verifyPassword = await bcrypt.compare(password, userToVerify?.password!)
             if (!verifyPassword) {
-                res.status(404).json({ msg: 'Credenciales invalidas' })
+                res.status(404).json({ msg: 'Credenciales invalidas' });
+                return;
             }
-            const userVerified = userToVerify;
+            const userVerified: IUser = userToVerify?.toObject() as IUser;
+            delete userVerified.password;
             const token = jwt.sign({ ...userVerified }, secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
             req.session.userLogged = userVerified;
-            res.status(200).json({ userVerified, token })
+            res.status(200).json({ userVerified, token });
+            return;
         } catch (error) {
-            res.status(500).json({ msg: `Problema mientras se logueaba al usuario: ${error}` })
+            res.status(500).json({ msg: `Problema mientras se logueaba al usuario` });
+            return;
         }
 
     }),
@@ -223,25 +252,21 @@ const controller = {
         try {
             const { email, username, password }: IRegisterUser = req.body
             const avatar = req.file as Express.Multer.File
-
             if (!email || !username || !password) {
                 res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
+                return;
             }
-
             const emailAlreadyInDb = await User.find({ email })
-
             if (emailAlreadyInDb.length > 0) {
-                res.status(409).json({ msg: 'Email ya en uso' })
+                res.status(409).json({ msg: 'Email ya en uso' });
+                return;
             }
-
             const usernameAlreadyInDb = await User.find({ username })
-
             if (usernameAlreadyInDb.length > 0) {
-                res.status(409).json({ msg: 'Nombre de usuario ya en uso' })
+                res.status(409).json({ msg: 'Nombre de usuario ya en uso' });
+                return;
             }
-
             const hashPassword = await bcrypt.hash(password, 10)
-
             let result: IImage;
             if (avatar) {
                 result = await handleUploadImage(avatar.path, avatarsFolder);
@@ -251,7 +276,6 @@ const controller = {
                     public_id: default_public_id
                 }
             }
-
             let newUserData: IUser = {
                 email,
                 username,
@@ -259,48 +283,65 @@ const controller = {
                 isAdmin: 0,
                 image: result
             }
-
-            let newUser = await User.create(newUserData)
-            res.status(201).json(newUser);
+            let newUser = await User.create(newUserData);
+            let newUserObject = newUser.toObject();
+            delete newUserObject.password;
+            res.status(201).json(newUserObject);
+            return;
         } catch (error) {
-            res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` })
+            res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` });
+            return;
         }
 
     }),
     checkSession: async (req: Request, res: Response): Promise<void> => {
         const user = req.session.userLogged
         if (user) {
-            res.status(200).json({ loggedIn: true, user })
+            res.status(200).json({ loggedIn: true, user });
+            return;
         } else {
-            res.status(200).json({ loggedIn: false })
+            res.status(200).json({ loggedIn: false });
+            return;
         }
 
     },
     checkCookie: async (req: Request, res: Response): Promise<void> => {
-        const userAccessToken = req.cookies.user_access_token;
+        try {
+            const userAccessToken = req.cookies.user_access_token;
+            const userInRequest = req.user;
         if (userAccessToken) {
             const userToFind = await User
-                .findById(req.user._id)
+                .findById(userInRequest._id)
                 .populate('twitts')
             if (!userToFind) {
-                res.status(404).json({ msg: "Usuario no encontrado" })
+                res.status(404).json({ msg: "Usuario no encontrado" });
+                return;
             }
             const userFound = userToFind
-            res.status(200).json({ loggedIn: true, user: userFound })
+            res.status(200).json({ loggedIn: true, user: userFound });
+            return;
         }
         else {
-            res.status(200).json({ loggedIn: false })
+            res.status(200).json({ loggedIn: false });
+            return;
         }
+        } catch (error) {
+            res.status(500).json({msg: 'Probleam mientras se chequeaba la cookie de usuario'});
+            return;
+        }
+        
     },
     updateUser: async (req: Request, res: Response): Promise<void> => {
         try {
             const userId: string = req.params.userId;
             if (!isValidObjectId(userId)) {
                 res.status(400).json({ msg: 'Id de usuario invalido' })
+                return;
             }
             const userToFind = await User.findById(userId)
             if (!userToFind) {
                 res.status(404).json({ msg: 'Usuario no encontrado' })
+                return;
             } else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
                 const bodyAvatar = req.file;
@@ -321,75 +362,79 @@ const controller = {
                     isAdmin: 0,
                     image: result
                 }
-
                 const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })
-
                 res.status(200).json(updatedUser)
+                return;
             }
-
 
         } catch (error) {
             res.status(500).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
+            return;
         }
     },
     convertUserToAdmin: async (req: Request, res: Response) => {
-
         try {
             const userId: string = req.params.userId;
             const key: string = req.body.key
             const adminKey = process.env.ADMIN_KEY
-
             if (!isValidObjectId(userId)) {
-                res.status(400).json({ msg: 'Id de usuario invalido' })
+                res.status(400).json({ msg: 'Id de usuario invalido' });
+                return;
             }
-
             if (key === adminKey) {
                 const userToFind = await User.findByIdAndUpdate(userId, { isAdmin: 1 }, { new: true })
-
                 if (!userToFind) {
-                    res.status(404).json({ msg: 'Usuario no encontrado' })
+                    res.status(404).json({ msg: 'Usuario no encontrado' });
+                    return;
                 } else {
                     const admin = userToFind
-                    res.status(200).json(admin)
+                    res.status(200).json(admin);
+                    return;
                 }
-
             } else {
-                res.status(400).json({ msg: 'Key de admin incorrecta' })
+                res.status(400).json({ msg: 'Key de admin incorrecta' });
+                return;
             }
-
         } catch (error) {
-            console.log(error)
-            res.status(400).json({ msg: `Problema mientras se convertia al usuario en admin: ${error}` })
+            res.status(400).json({ msg: `Problema mientras se convertia al usuario en admin: ${error}` });
+            return;
         }
-
-
     },
-    deleteUser: async (req: Request, res: Response) => {
+    deleteUser: async (req: Request, res: Response): Promise<void> => {
         try {
             const userId: string = req.params.userId
             if (!isValidObjectId(userId)) {
-                return res.status(400).json({ msg: 'Id de usuario invalido' });
+                res.status(400).json({ msg: 'Id de usuario invalido' });
+                return;
             }
             const userToDelete = await User.findByIdAndRemove(userId);
-            if (userToDelete == null) {
-                return res.status(404).json({ msg: 'Usuario no encontrado' });
+            if (!userToDelete) {
+                res.status(404).json({ msg: 'Usuario no encontrado' });
+                return;
+            } else {
+                const userAvatarPublicId = userToDelete.image.public_id;
+                const defaultAvatarPublicId = defaultAvatarPaths.default_public_id;
+                if (!(userAvatarPublicId === defaultAvatarPublicId)) {
+                    await handleDeleteImage(userAvatarPublicId);
+                }
+                res.status(200).json({ msg: 'User successfully deleted' });
+                return;
             }
-            await handleDeleteImage(userToDelete.image.public_id);
-            return res.status(200).json(userId)
         } catch (error) {
-            console.log(error)
-            return res.status(400).json({ msg: `Problema mientras se eliminaba el usuario: ${error}` })
+            res.status(500).json({ msg: `Problema mientras se eliminaba el usuario` });
+            return;
         }
 
     },
-    logout: (_req: Request, res: Response) => {
+    logout: (_req: Request, res: Response): void => {
         try {
             res.cookie('user_access_token', '', { maxAge: 1, httpOnly: true, secure: false })
-            return res.status(200).json({ msg: "Fuiste deslogueado" })
+           res.status(200).json({ msg: "Fuiste deslogueado" });
+           return;
         } catch (error) {
-            return res.status(400).json({ msg: error })
+           res.status(500).json({ msg: error });
+           return;
         }
-
     }
 }
 

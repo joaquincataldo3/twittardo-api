@@ -13,11 +13,17 @@ const comment_1 = __importDefault(require("./routes/comment"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const express_session_1 = __importDefault(require("express-session"));
+const express_fileupload_1 = __importDefault(require("express-fileupload"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const MONGO_URI = process.env.MONGO_URI;
 const SESSION_SECRET = process.env.SESSION_SECRET;
 app.use('/images', express_1.default.static(path_1.default.join(__dirname, '../')));
+app.use((0, express_fileupload_1.default)({
+    useTempFiles: true,
+    tempFileDir: './src/tmpUploads',
+    debug: true
+}));
 app.use((0, cookie_parser_1.default)());
 app.use((0, express_session_1.default)({
     secret: SESSION_SECRET,

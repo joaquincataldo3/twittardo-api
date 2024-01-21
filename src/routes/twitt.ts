@@ -1,16 +1,15 @@
 import express from 'express'
 import twittController from '../controllers/twitt'
 import { verifyToken, verifyUserOrAdmin } from '../middlewares/auth'
-import imageUpload from '../middlewares/imageUpload'
 
 
 const router = express.Router()
 
 
-router.get('/all/:userId', twittController.allTwitts);
+router.get('/all', twittController.allTwitts);
 router.get('/:twittId',  twittController.oneTwitt);
 
-router.post('/:userId/create', verifyToken, verifyUserOrAdmin, imageUpload.single('image'), twittController.createTwitt);
+router.post('/create', verifyToken, verifyUserOrAdmin, twittController.createTwitt);
 
 router.put('/add-fav/:twittId/:userId', verifyToken, twittController.favOneTwitt);
 router.put('/undo-fav/:twittId/:userId', verifyToken, twittController.favOneTwitt);

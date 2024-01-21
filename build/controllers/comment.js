@@ -17,21 +17,13 @@ const twitt_1 = __importDefault(require("../database/models/twitt"));
 const user_1 = __importDefault(require("../database/models/user"));
 const mongoose_1 = require("mongoose");
 const controller = {
-    allComments: (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            const comments = yield comment_1.default.find();
-            return res.status(200).json(comments);
-        }
-        catch (error) {
-            return res.status(400).json({ msg: `Problema mientras se buscaban los comentarios: ${error}` });
-        }
-    }),
     createComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const userId = req.params.userId;
             const twittId = req.params.twittId;
             if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
-                return res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+                res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+                return;
             }
             const commentData = {
                 comment: req.body.comment,
@@ -57,10 +49,12 @@ const controller = {
             }, {
                 new: true
             });
-            return res.status(200).json({ newComment, pushCommentInTwitt, pushCommentInUser });
+            res.status(200).json({ newComment, pushCommentInTwitt, pushCommentInUser });
+            return;
         }
         catch (error) {
-            return res.status(400).json({ msg: `Problema mientras se creaba un comentario: ${error}` });
+            res.status(500).json({ msg: 'Ocurrió un problema mientras se creaba un comentario' });
+            return;
         }
     }),
     favOneComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -68,7 +62,8 @@ const controller = {
             const twittId = req.params.twittId;
             const userId = req.params.userId;
             if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
-                return res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+                res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+                return;
             }
             yield comment_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: 1 } }, { new: true });
             yield user_1.default.findByIdAndUpdate(userId, {
@@ -78,11 +73,13 @@ const controller = {
             }, {
                 new: true
             });
-            return res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' });
+            res.status(201).json({ msg: 'Twitt faveado satisfactoriamente' });
+            return;
         }
         catch (error) {
             console.log(error);
-            return res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
+            res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
+            return;
         }
     }),
     deleteComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -90,12 +87,15 @@ const controller = {
             const commentIdToDelete = req.params.commentId;
             if (!(0, mongoose_1.isValidObjectId)(commentIdToDelete)) {
                 res.status(400).json({ msg: 'Comentario id invalido' });
+                return;
             }
             yield comment_1.default.findByIdAndRemove(commentIdToDelete);
             res.status(200).json(commentIdToDelete);
+            return;
         }
         catch (error) {
             res.status(400).json({ msg: `Problema mientras se borraba un comentario: ${error}` });
+            return;
         }
     })
 };

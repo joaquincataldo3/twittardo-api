@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const mongoose_2 = require("mongoose");
+const modelsName_1 = require("../../utils/constants/modelsName");
+const { UserModel, TwittModel } = modelsName_1.modelsName;
 const commentSchema = new mongoose_2.Schema({
     comment: {
         type: String,
@@ -12,7 +14,7 @@ const commentSchema = new mongoose_2.Schema({
     },
     user: {
         type: mongoose_2.Types.ObjectId,
-        ref: 'User',
+        ref: UserModel,
         required: true
     },
     favourites: {
@@ -20,7 +22,7 @@ const commentSchema = new mongoose_2.Schema({
     },
     twittCommented: {
         type: mongoose_2.Types.ObjectId,
-        ref: 'Twitt',
+        ref: TwittModel,
         required: true
     }
 });

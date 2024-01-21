@@ -1,10 +1,7 @@
-import { Response } from 'express';
-import { Model, Document } from 'mongoose'
-
 // Extiende el tipo SessionData para incluir userLoggedId
 declare module 'express-session' {
     interface SessionData {
-      userLogged: UserT | null; // Asegúrate de que coincida con el tipo correcto
+      userLogged: IUser | null; // Asegúrate de que coincida con el tipo correcto
     }
   }
 
@@ -14,29 +11,21 @@ export interface IUser {
     username: string,
     password?: string,
     isAdmin: number,
-    image: Image
-    favourites?: TwittT[] | [],
-    twitts?: TwittT[] | [],
-    followers?: UserToFront[] | [],
-    following?: UserToFront | [],
-    comments?: CommentT[] | []
+    image: IImage
+    favourites?: string[] | [],
+    twitts?: string[] | [],
+    followers?: string[] | [],
+    following?: string | [],
+    comments?: IComment[] | []
 }
 
 export interface ITwitt {
     twitt: string,
-    image?: Image
-    user: string
-    comments?: string[]
+    image: IImage
+    userId: string
+    comments: IComment[]
     favourites?: number
-    commentsNumber: number
 }
-
-export interface ITwittPopulated extends ITwitt {
-    id: string
-    user: UserT
-    comments: CommentT
-}
-
 
 export interface IComment {
     comment: string,
@@ -78,14 +67,7 @@ export interface ICloudinaryFolders {
     avatarsFolder: string
 }
 
-export interface ModelNames {
-    CommentModel: string
-    TwittModel: string
-    UserModel: string
-    FavouriteModel: string
-}
-
-export interface ModelPaths {
+export interface IModelPaths {
     commentPath: string
     twittPath: string
     userPath: string
@@ -95,3 +77,10 @@ export interface ModelPaths {
 
 export type PORT = string | number
 
+
+export interface IModelNames {
+    CommentModel: string
+    TwittModel: string
+    UserModel: string
+    FavouriteModel: string
+}

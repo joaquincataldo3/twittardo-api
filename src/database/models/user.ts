@@ -1,5 +1,8 @@
-import mongoose from "mongoose"
-import { Schema, Types } from "mongoose"
+import mongoose from "mongoose";
+import { Schema, Types } from "mongoose";
+import { modelsName } from "../../utils/constants/modelsName";
+
+const {UserModel, CommentModel, TwittModel } = modelsName;
 
 const userSchema: Schema = new Schema({
   username: {
@@ -23,23 +26,23 @@ const userSchema: Schema = new Schema({
   },
   favourites: [{
     type: Types.ObjectId,
-    ref: 'Favourite'
+    ref: TwittModel
   }],
   twitts: [{
     type: Types.ObjectId,
-    ref: 'Twitt'
+    ref: TwittModel
   }],
   comments: [{
     type: Types.ObjectId,
-    ref: 'Comment'
+    ref: CommentModel
   }],
   followers: [{
     type: Types.ObjectId,
-    ref: 'User'
+    ref: UserModel
   }],
   following: [{
     type: Types.ObjectId,
-    ref: 'User'
+    ref: UserModel
   }],
   createdAt: {
     type: Date,
@@ -48,6 +51,6 @@ const userSchema: Schema = new Schema({
   }
 });
 
-const model = mongoose.model('User', userSchema)
+const model = mongoose.model(UserModel, userSchema)
 
 export default model

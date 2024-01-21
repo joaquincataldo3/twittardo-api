@@ -1,6 +1,5 @@
 import express from 'express'
 import userController from '../controllers/user'
-import imageUpload from '../middlewares/imageUpload'
 import {/*  verifyAdmin, */ verifyToken, verifyUserOrAdmin } from '../middlewares/auth'
 
 const router = express.Router()
@@ -12,7 +11,7 @@ router.get('/comments/:userId', userController.getCommentsByUser);
 router.get('/twitts/:userId', userController.getTwittsByUser);
 router.get('/favourites/:userId', userController.getFavouritesByUser);
 
-router.post('/register', imageUpload.single('avatar'), userController.register);
+router.post('/register',  userController.register);
 router.post('/login', userController.processLogin);
 
 router.put('/:userId/update', verifyToken, verifyUserOrAdmin, userController.follow);

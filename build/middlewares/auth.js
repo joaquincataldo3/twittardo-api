@@ -17,6 +17,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_1 = __importDefault(require("../database/models/user"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+/// <reference path=""..//express.d.ts"" />
 const verifyToken = (req, res, next) => {
     const jwtKey = process.env.JWT_KEY;
     const userAccessToken = req.cookies.user_access_token;
@@ -28,7 +29,20 @@ const verifyToken = (req, res, next) => {
             if (err) {
                 return res.status(403).json({ msg: 'Token invalido' });
             }
-            req.user = user;
+            const userVerified = {
+                _id: user._id,
+                email: user.email,
+                username: user.username,
+                password: user.password,
+                isAdmin: user.isAdmin,
+                image: user.image,
+                favourites: user.favourites || [],
+                twitts: user.twitts || [],
+                followers: user.followers || [],
+                following: user.following || [],
+                comments: user.comments || []
+            };
+            req.user = userVerified;
             next();
             return;
         });

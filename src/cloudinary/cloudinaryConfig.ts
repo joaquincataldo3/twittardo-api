@@ -1,6 +1,6 @@
-import { DeleteApiResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
+import { UploadApiResponse, v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
-import { ICloudinaryFolders } from '../../types';
+import { ICloudinaryFolders } from '../utils/interfaces/interfaces'; 
 
 dotenv.config();
 
@@ -10,7 +10,7 @@ cloudinary.config({
     api_secret: process.env.API_SECRET,
     secure: true
 });
-
+   
 export const handleUploadImage = async (imagePath: string, folder: string): Promise<UploadApiResponse> => {
     try {
         const result = await cloudinary.uploader.upload(imagePath, {

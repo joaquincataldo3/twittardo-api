@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 import { Schema, Types} from "mongoose"
 import { modelsName } from "../../utils/constants/modelsName"
 
-const {User, Twitt} = modelsName;
+const {UserModel, TwittModel} = modelsName;
 
 const commentSchema: Schema = new Schema({
     comment: {
@@ -11,7 +11,7 @@ const commentSchema: Schema = new Schema({
     },
     user: {
         type: Types.ObjectId,
-        ref: User, 
+        ref: UserModel, 
         required: true
     },
     favourites: {
@@ -19,7 +19,7 @@ const commentSchema: Schema = new Schema({
     },
     twittCommented: {
         type: Types.ObjectId,
-        ref: Twitt, 
+        ref: TwittModel, 
         required: true
     }
 })

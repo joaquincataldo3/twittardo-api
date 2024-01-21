@@ -5,35 +5,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const mongoose_2 = require("mongoose");
+const modelsName_1 = require("../../utils/constants/modelsName");
+const { UserModel, CommentModel, TwittModel } = modelsName_1.modelsName;
 const twittSchema = new mongoose_2.Schema({
     twitt: {
         type: String,
         required: true
     },
     image: {
-        type: String,
-    },
-    image_url: {
-        type: String
+        public_id: String,
+        secure_url: String
     },
     user: {
         type: mongoose_2.Types.ObjectId,
-        ref: 'User',
+        ref: UserModel,
         required: true
     },
     comments: [{
             type: mongoose_2.Types.ObjectId,
-            ref: 'Comment'
+            ref: CommentModel
         }],
-    commentsNumber: {
+    favourites: {
         type: Number
     },
-    favourites: { type: Number },
     createdAt: {
         type: Date,
         default: () => Date.now(),
         immutable: true
     }
 });
-const model = mongoose_1.default.model('Twitt', twittSchema);
+const model = mongoose_1.default.model(TwittModel, twittSchema);
 exports.default = model;
