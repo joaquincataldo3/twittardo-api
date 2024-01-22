@@ -39,6 +39,7 @@ const controller = {
                 })
 
             await Twitt.populate(twitts, { path: 'comments.user' });
+            console.log(twitts[0])
             res.status(200).json(twitts);
             return;
         } catch (error) {
