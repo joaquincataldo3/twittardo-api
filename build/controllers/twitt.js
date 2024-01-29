@@ -20,8 +20,10 @@ const mongoose_1 = require("mongoose");
 const modelsPath_1 = require("../utils/constants/modelsPath");
 const cloudinaryConfig_1 = require("../cloudinary/cloudinaryConfig");
 const cloudinaryConfig_2 = require("../cloudinary/cloudinaryConfig");
+const modelsName_1 = require("../utils/constants/modelsName");
 dotenv_1.default.config();
 const { commentPath, userPath } = modelsPath_1.modelPaths;
+const { UserModel } = modelsName_1.modelsName;
 const { twittsFolder } = cloudinaryConfig_2.folderNames;
 const userExcludedField = '-password -email';
 const controller = {
@@ -47,7 +49,6 @@ const controller = {
                 }
             });
             yield twitt_1.default.populate(twitts, { path: 'comments.user' });
-            console.log(twitts[0]);
             res.status(200).json(twitts);
             return;
         }
@@ -85,6 +86,31 @@ const controller = {
         catch (error) {
             res.status(500).json({ msg: `Problema mientras se buscaba un twitt en particular: ${error}` });
             return;
+        }
+    }),
+    twittsByUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const userId = req.params.userId;
+            const page = String(req.query.p);
+            const pageNumber = Number(page);
+            const twittPerPage = 5;
+            if (!(0, mongoose_1.isValidObjectId)(userId)) {
+                res.status(400).json({ msg: 'Id invalido' });
+            }
+            const twitts = yield twitt_1.default
+                .find({ user: userId })
+                .populate({
+                path: 'user',
+                model: UserModel // Especificar el modelo de usuario
+            })
+                .skip((pageNumber - 1) * twittPerPage)
+                .limit(twittPerPage)
+                .sort({ createdAt: -1 });
+            console.log(twitts);
+            res.status(200).json({ twitts });
+        }
+        catch (error) {
+            res.status(500).json({ msg: 'Problema interno en el servidor' });
         }
     }),
     favOneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {

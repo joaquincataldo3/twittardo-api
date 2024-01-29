@@ -9,12 +9,11 @@ import { Request, Response } from 'express';
 import { modelPaths } from '../utils/constants/modelsPath';
 import { folderNames, handleDeleteImage, handleUploadImage } from '../cloudinary/cloudinaryConfig';
 import { defaultAvatarPaths } from '../utils/constants/defaultAvatar';
-// user.ts
-/// <reference path="./express.d.ts" />
+import { userExcludedFields } from '../utils/constants/userUtils';
 
 dotenv.config();
 
-const { commentPath, userPath, favouritePath, twittPath, twittCommentedPath } = modelPaths;
+const { userPath  , favouritePath, twittPath } = modelPaths; 
 const { default_secure_url, default_public_id } = defaultAvatarPaths;
 const { avatarsFolder } = folderNames;
 
@@ -22,7 +21,6 @@ const controller = {
     oneUser: async (req: Request, res: Response): Promise<void> => {
         try {
             const id: string = req.params.userId;
-            const limitFirstFetch = 5;
             if (!isValidObjectId(id)) {
                 res.status(500).json({ msg: 'Id de usuario invalido' });
                 return;
@@ -30,37 +28,6 @@ const controller = {
             // busco el usuario y traigo los 5 primeros resultados de cada campo
             const userToFind = await User
                 .findById(id)
-                .populate({
-                    path: twittPath,
-                    options: {
-                        limit: limitFirstFetch,
-                        sort: { createdAt: -1 }
-                    }
-                })
-                .populate({
-                    path: favouritePath,
-                    options: {
-                        limit: limitFirstFetch,
-                        sort: { createdAt: -1 }
-                    },
-                    populate: {
-                        path: userPath
-                    }
-                })
-                .populate({
-                    path: commentPath,
-                    options: {
-                        limit: limitFirstFetch,
-                        sort: { createdAt: -1 }
-                    },
-                    populate: {
-                        path: twittCommentedPath,
-                        populate: {
-                            path: userPath,
-                            select: 'username'
-                        }
-                    }
-                })
                 .select('-password')
             if (!userToFind) {
                 res.status(404).json({ msg: 'El usuario no fue encontrado' });
@@ -75,52 +42,12 @@ const controller = {
         }
 
     },
-    getCommentsByUser: async (req: Request, res: Response): Promise<void> => {
+    getFavouritesByUser: async (req: Request, res: Response): Promise<void> => {
         try {
             const userId: string = req.params.userId;
             const page: string = String(req.query.p);
             const pageNumber: number = Number(page);
-            const commentsByPage: number = 5;
-            if (isNaN(pageNumber) || pageNumber < 1) {
-                res.status(500).json({ msg: 'El número de página debe ser un número positivo.' });
-                return;
-            }
-            const userToFind = await User
-                .findById(userId)
-                .populate({
-                    path: commentPath,
-                    options: {
-                        skip: (pageNumber - 1) * commentsByPage,
-                        limit: commentsByPage,
-                        sort: { createdAt: -1 }
-                    },
-                    populate: {
-                        path: twittCommentedPath,
-                        populate: {
-                            path: userPath,
-                            select: 'username'
-                        }
-                    }
-                });
-            if (!userToFind) {
-                res.status(404).json({ msg: 'El usuario no fue encontrado' });
-                return;
-            }
-            const user = userToFind;
-            res.status(200).json(user);
-            return;
-        } catch (error) {
-            res.status(500).json({ msg: `Problema mientras se buscaba los comentarios por usuario` })
-            return;
-        }
-
-    },
-    getTwittsByUser: async (req: Request, res: Response): Promise<void> => {
-        try {
-            const userId: string = req.params.userId;
-            const page: string = String(req.query.p);
-            const pageNumber: number = Number(page);
-            const commentsByPage: number = 5;
+            const favouritesPerPage: number = 5;
             if (isNaN(pageNumber) || pageNumber < 1) {
                 res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
                 return;
@@ -128,60 +55,29 @@ const controller = {
             const userToFind = await User
                 .findById(userId)
                 .populate({
-                    path: twittPath,
-                    options: {
-                        skip: (pageNumber - 1) * commentsByPage,
-                        limit: commentsByPage,
-                        sort: { createdAt: -1 }
-                    }
-                });
+                    path: favouritePath,
+                    populate: {
+                        path: userPath,
+                        options: {
+                            skip: (pageNumber - 1) * favouritesPerPage, 
+                            limit: favouritesPerPage 
+                        }
+                    } 
+                })
+                .populate(twittPath)
+                .select(userExcludedFields)
             if (!userToFind) {
                 res.status(404).json({ msg: 'El usuario no fue encontrado' });
                 return;
             }
-            res.status(200).json(userToFind);
+            const userFound = userToFind;
+            res.status(200).json(userFound);
             return;
-        } catch (error) {
-            res.status(500).json({ msg: `Problema mientras se buscaba los twitts por usuario` });
-            return;
-        }
-
-    },
-    getFavouritesByUser: async (req: Request, res: Response): Promise<void> => {
-        try {
-            const userId: string = req.params.userId;
-        const page: string = String(req.query.p);
-        const pageNumber: number = Number(page);
-        const commentsByPage: number = 5;
-        if (isNaN(pageNumber) || pageNumber < 1) {
-            res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
-            return;
-        };
-        const userToFind = await User
-            .findById(userId)
-            .populate({
-                path: favouritePath,
-                options: {
-                    skip: (pageNumber - 1) * commentsByPage,
-                    limit: commentsByPage,
-                    sort: { createdAt: -1 }
-                },
-                populate: {
-                    path: userPath
-                }
-            });
-        if (!userToFind) {
-            res.status(404).json({ msg: 'El usuario no fue encontrado' });
-            return;
-        }
-        const userFound = userToFind;
-        res.status(200).json(userFound);
-        return;
         } catch (error) {
             res.status(500).json({ msg: `Problema mientras se buscaba los favoritos por usuario` });
             return;
         }
-        
+
     },
     follow: async (req: Request, res: Response): Promise<void> => {
         try {
@@ -218,6 +114,7 @@ const controller = {
     },
     processLogin: (async (req: Request, res: Response): Promise<void> => {
         try {
+
             const { password, email }: ILoginUser = req.body
             const secretKey = process.env.JWT_KEY!
             if (!password || !email) {
@@ -309,27 +206,27 @@ const controller = {
         try {
             const userAccessToken = req.cookies.user_access_token;
             const userInRequest = req.user;
-        if (userAccessToken) {
-            const userToFind = await User
-                .findById(userInRequest._id)
-                .populate('twitts')
-            if (!userToFind) {
-                res.status(404).json({ msg: "Usuario no encontrado" });
+            if (userAccessToken) {
+                const userToFind = await User
+                    .findById(userInRequest._id)
+                    .populate('twitts')
+                if (!userToFind) {
+                    res.status(404).json({ msg: "Usuario no encontrado" });
+                    return;
+                }
+                const userFound = userToFind
+                res.status(200).json({ loggedIn: true, user: userFound });
                 return;
             }
-            const userFound = userToFind
-            res.status(200).json({ loggedIn: true, user: userFound });
-            return;
-        }
-        else {
-            res.status(200).json({ loggedIn: false });
-            return;
-        }
+            else {
+                res.status(200).json({ loggedIn: false });
+                return;
+            }
         } catch (error) {
-            res.status(500).json({msg: 'Probleam mientras se chequeaba la cookie de usuario'});
+            res.status(500).json({ msg: 'Probleam mientras se chequeaba la cookie de usuario' });
             return;
         }
-        
+
     },
     updateUser: async (req: Request, res: Response): Promise<void> => {
         try {
@@ -429,11 +326,11 @@ const controller = {
     logout: (_req: Request, res: Response): void => {
         try {
             res.cookie('user_access_token', '', { maxAge: 1, httpOnly: true, secure: false })
-           res.status(200).json({ msg: "Fuiste deslogueado" });
-           return;
+            res.status(200).json({ msg: "Fuiste deslogueado" });
+            return;
         } catch (error) {
-           res.status(500).json({ msg: error });
-           return;
+            res.status(500).json({ msg: error });
+            return;
         }
     }
 }

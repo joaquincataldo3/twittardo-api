@@ -4,8 +4,9 @@ import { verifyToken, verifyUserOrAdmin } from '../middlewares/auth'
 
 const router = express.Router()
 
+router.get('/by-user/:userId', commentController.getCommentsByUser)
 
-router.post('/:twittId/:userId/create', verifyToken, commentController.createComment);
+router.post('/:twittId/create', verifyToken, commentController.createComment);
 
 router.delete('/:commentId/delete', verifyToken, verifyUserOrAdmin, commentController.deleteComment);
 

@@ -8,12 +8,15 @@ import { modelPaths } from '../utils/constants/modelsPath';
 import { IImage } from '../utils/interfaces/interfaces';
 import { handleDeleteImage, handleUploadImage } from '../cloudinary/cloudinaryConfig';
 import { folderNames } from '../cloudinary/cloudinaryConfig';
+import { modelsName } from '../utils/constants/modelsName';
+import { userExcludedFields } from '../utils/constants/userUtils';
 
 dotenv.config()
 
 const { commentPath, userPath } = modelPaths;
+const {UserModel } = modelsName;
 const { twittsFolder } = folderNames;
-const userExcludedField = '-password -email';
+
 
 const controller = {
     allTwitts: async (req: Request, res: Response): Promise<void> => {
@@ -29,17 +32,14 @@ const controller = {
                 .sort({ createdAt: -1 })
                 .skip(twittPerPage * (pageNumber - 1))
                 .limit(twittPerPage)
-                .populate(userPath, userExcludedField)
+                .populate(userPath, userExcludedFields)
                 .populate({
                     path: commentPath,
                     populate: {
                         path: userPath,
-                        select: userExcludedField
+                        select: userExcludedFields
                     }
                 })
-
-            await Twitt.populate(twitts, { path: 'comments.user' });
-            console.log(twitts[0])
             res.status(200).json(twitts);
             return;
         } catch (error) {
@@ -50,6 +50,7 @@ const controller = {
     },
     oneTwitt: async (req: Request, res: Response): Promise<void> => {
         try {
+            console.log('entro')
             const twittId: string = req.params.twittId
             if (!isValidObjectId(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
@@ -57,15 +58,16 @@ const controller = {
             }
             const twittResponse = await Twitt
                 .findById(twittId)
-                .populate({ path: 'user', select: userExcludedField })
+                .populate({ path: 'user', select: userExcludedFields })
                 .populate({
                     path: commentPath,
                     populate: {
                         path: userPath,
-                        select: userExcludedField
+                        select: userExcludedFields
                     }
                 })
             if (!twittResponse) {
+                console.log('entro null')
                 res.status(404).json({ msg: "Twitt no encontrado" });
                 return;
             } else {
@@ -78,25 +80,57 @@ const controller = {
         }
 
     },
+    twittsByUser: async (req: Request, res: Response): Promise<void> => {
+        try {
+         
+            const userId = req.params.userId;
+            const page: string = String(req.query.p);
+            const pageNumber: number = Number(page);
+            const twittPerPage: number = 5; 
+            if(!isValidObjectId(userId)) {
+                res.status(400).json({msg: 'Id invalido'});
+                return;
+            }
+            const twitts = await Twitt
+            .find({user: userId})
+            .populate({
+                path: userPath,
+                model: UserModel,
+                select: userExcludedFields
+            })
+            .skip((pageNumber - 1) * twittPerPage)
+            .limit(twittPerPage)
+            .sort({ createdAt: -1 });
+            res.status(200).json({twitts});
+            return;
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({msg: 'Problema interno en el servidor'})
+            return;
+        }
+    },
     favOneTwitt: async (req: Request, res: Response): Promise<void> => {
         try {
             const twittId = req.params.twittId;
             const userId = req.params.userId;
+            console.log(twittId);
             if (!isValidObjectId(userId) || !isValidObjectId(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
                 return;
             }
             await Twitt.findByIdAndUpdate(userId,
                 {
-                    $addToSet: {
-                        favourites: twittId
-                    },
-                }, {
-                new: true
-            })
+                    $inc: {
+                        favourites: 1
+                    }
+                },
+                {
+                    new: true
+                }
+            );
             await User.findByIdAndUpdate(userId,
                 {
-                    $addToSet: {
+                    $push: {
                         favourites: twittId
                     },
                 }, {

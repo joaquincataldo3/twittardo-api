@@ -7,8 +7,6 @@ router.get('/check-session', userController.checkSession);
 router.get('/check-cookie', verifyToken, userController.checkCookie);
 router.get('/logout', verifyToken, userController.logout);
 router.get('/:userId', userController.oneUser);
-router.get('/comments/:userId', userController.getCommentsByUser);
-router.get('/twitts/:userId', userController.getTwittsByUser);
 router.get('/favourites/:userId', userController.getFavouritesByUser);
 
 router.post('/register',  userController.register);

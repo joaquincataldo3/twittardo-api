@@ -7,7 +7,8 @@ const router = express.Router()
 
 
 router.get('/all', twittController.allTwitts);
-router.get('/:twittId',  twittController.oneTwitt);
+router.get('/one/:twittId',  twittController.oneTwitt);
+router.get('/by-user/:userId',  twittController.twittsByUser);
 
 router.post('/create', verifyToken, verifyUserOrAdmin, twittController.createTwitt);
 

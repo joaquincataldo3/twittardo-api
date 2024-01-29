@@ -11,8 +11,6 @@ router.get('/check-session', user_1.default.checkSession);
 router.get('/check-cookie', auth_1.verifyToken, user_1.default.checkCookie);
 router.get('/logout', auth_1.verifyToken, user_1.default.logout);
 router.get('/:userId', user_1.default.oneUser);
-router.get('/comments/:userId', user_1.default.getCommentsByUser);
-router.get('/twitts/:userId', user_1.default.getTwittsByUser);
 router.get('/favourites/:userId', user_1.default.getFavouritesByUser);
 router.post('/register', user_1.default.register);
 router.post('/login', user_1.default.processLogin);

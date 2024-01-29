@@ -63,7 +63,6 @@ const verifyUserOrAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         return;
     }
     catch (error) {
-        console.log(error);
         return res.status(400).json({ msg: `Problema mientras se verificaba usuario o admin: ${error}` });
     }
 });

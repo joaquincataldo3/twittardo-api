@@ -16,6 +16,8 @@ const comment_1 = __importDefault(require("../database/models/comment"));
 const twitt_1 = __importDefault(require("../database/models/twitt"));
 const user_1 = __importDefault(require("../database/models/user"));
 const mongoose_1 = require("mongoose");
+const modelsPath_1 = require("../utils/constants/modelsPath");
+const { userPath, twittCommentedPath } = modelsPath_1.modelPaths;
 const controller = {
     createComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
@@ -57,6 +59,34 @@ const controller = {
             return;
         }
     }),
+    getCommentsByUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const userId = req.params.userId;
+            const page = String(req.query.p);
+            const pageNumber = Number(page);
+            const commentsPerPage = 5;
+            if (!(0, mongoose_1.isValidObjectId)(userId)) {
+                res.status(400).json({ msg: 'Id invalido' });
+            }
+            const comments = yield twitt_1.default
+                .find({ user: userId })
+                .populate({
+                path: userPath,
+                options: {
+                    skip: (pageNumber - 1) * commentsPerPage,
+                    limit: commentsPerPage,
+                    sort: { createdAt: -1 }
+                }
+            })
+                .populate({
+                path: twittCommentedPath,
+            });
+            res.status(200).json({ comments });
+        }
+        catch (error) {
+            res.status(500).json({ msg: 'Problema interno en el servidor' });
+        }
+    }),
     favOneComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const twittId = req.params.twittId;
@@ -77,7 +107,6 @@ const controller = {
             return;
         }
         catch (error) {
-            console.log(error);
             res.status(400).json({ msg: `Problema mientras se faveaba un twitt: ${error}` });
             return;
         }

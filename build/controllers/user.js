@@ -23,14 +23,13 @@ const defaultAvatar_1 = require("../utils/constants/defaultAvatar");
 // user.ts
 /// <reference path="./express.d.ts" />
 dotenv_1.default.config();
-const { commentPath, userPath, favouritePath, twittPath, twittCommentedPath } = modelsPath_1.modelPaths;
+const { userPath, favouritePath } = modelsPath_1.modelPaths;
 const { default_secure_url, default_public_id } = defaultAvatar_1.defaultAvatarPaths;
 const { avatarsFolder } = cloudinaryConfig_1.folderNames;
 const controller = {
     oneUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const id = req.params.userId;
-            const limitFirstFetch = 5;
             if (!(0, mongoose_1.isValidObjectId)(id)) {
                 res.status(500).json({ msg: 'Id de usuario invalido' });
                 return;
@@ -38,37 +37,6 @@ const controller = {
             // busco el usuario y traigo los 5 primeros resultados de cada campo
             const userToFind = yield user_1.default
                 .findById(id)
-                .populate({
-                path: twittPath,
-                options: {
-                    limit: limitFirstFetch,
-                    sort: { createdAt: -1 }
-                }
-            })
-                .populate({
-                path: favouritePath,
-                options: {
-                    limit: limitFirstFetch,
-                    sort: { createdAt: -1 }
-                },
-                populate: {
-                    path: userPath
-                }
-            })
-                .populate({
-                path: commentPath,
-                options: {
-                    limit: limitFirstFetch,
-                    sort: { createdAt: -1 }
-                },
-                populate: {
-                    path: twittCommentedPath,
-                    populate: {
-                        path: userPath,
-                        select: 'username'
-                    }
-                }
-            })
                 .select('-password');
             if (!userToFind) {
                 res.status(404).json({ msg: 'El usuario no fue encontrado' });
@@ -80,79 +48,6 @@ const controller = {
         }
         catch (error) {
             res.status(500).json({ msg: `Problema mientras se buscaba el usuario especificado` });
-            return;
-        }
-    }),
-    getCommentsByUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            const userId = req.params.userId;
-            const page = String(req.query.p);
-            const pageNumber = Number(page);
-            const commentsByPage = 5;
-            if (isNaN(pageNumber) || pageNumber < 1) {
-                res.status(500).json({ msg: 'El número de página debe ser un número positivo.' });
-                return;
-            }
-            const userToFind = yield user_1.default
-                .findById(userId)
-                .populate({
-                path: commentPath,
-                options: {
-                    skip: (pageNumber - 1) * commentsByPage,
-                    limit: commentsByPage,
-                    sort: { createdAt: -1 }
-                },
-                populate: {
-                    path: twittCommentedPath,
-                    populate: {
-                        path: userPath,
-                        select: 'username'
-                    }
-                }
-            });
-            if (!userToFind) {
-                res.status(404).json({ msg: 'El usuario no fue encontrado' });
-                return;
-            }
-            const user = userToFind;
-            res.status(200).json(user);
-            return;
-        }
-        catch (error) {
-            res.status(500).json({ msg: `Problema mientras se buscaba los comentarios por usuario` });
-            return;
-        }
-    }),
-    getTwittsByUser: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            const userId = req.params.userId;
-            const page = String(req.query.p);
-            const pageNumber = Number(page);
-            const commentsByPage = 5;
-            if (isNaN(pageNumber) || pageNumber < 1) {
-                res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
-                return;
-            }
-            ;
-            const userToFind = yield user_1.default
-                .findById(userId)
-                .populate({
-                path: twittPath,
-                options: {
-                    skip: (pageNumber - 1) * commentsByPage,
-                    limit: commentsByPage,
-                    sort: { createdAt: -1 }
-                }
-            });
-            if (!userToFind) {
-                res.status(404).json({ msg: 'El usuario no fue encontrado' });
-                return;
-            }
-            res.status(200).json(userToFind);
-            return;
-        }
-        catch (error) {
-            res.status(500).json({ msg: `Problema mientras se buscaba los twitts por usuario` });
             return;
         }
     }),
