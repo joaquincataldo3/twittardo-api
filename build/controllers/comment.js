@@ -21,15 +21,16 @@ const { userPath, twittCommentedPath } = modelsPath_1.modelPaths;
 const controller = {
     createComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const userId = req.params.userId;
+            const user = req.user;
+            const { _id } = user;
             const twittId = req.params.twittId;
-            if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
-                res.status(400).json({ msg: 'Twitt o usuario id invalido' });
+            if (!(0, mongoose_1.isValidObjectId)(twittId)) {
+                res.status(400).json({ msg: 'Twitt id invalido' });
                 return;
             }
             const commentData = {
                 comment: req.body.comment,
-                user: userId,
+                user: _id,
                 twittCommented: twittId,
                 favourites: 0
             };
@@ -44,7 +45,7 @@ const controller = {
             }, {
                 new: true
             });
-            const pushCommentInUser = yield user_1.default.findByIdAndUpdate(userId, {
+            const pushCommentInUser = yield user_1.default.findByIdAndUpdate(_id, {
                 $addToSet: {
                     comments: newComment._id
                 }
@@ -67,24 +68,22 @@ const controller = {
             const commentsPerPage = 5;
             if (!(0, mongoose_1.isValidObjectId)(userId)) {
                 res.status(400).json({ msg: 'Id invalido' });
+                return;
             }
-            const comments = yield twitt_1.default
+            const comments = yield comment_1.default
                 .find({ user: userId })
-                .populate({
-                path: userPath,
-                options: {
-                    skip: (pageNumber - 1) * commentsPerPage,
-                    limit: commentsPerPage,
-                    sort: { createdAt: -1 }
-                }
-            })
-                .populate({
-                path: twittCommentedPath,
-            });
+                .populate(userPath)
+                .populate(twittCommentedPath)
+                .skip((pageNumber - 1) * commentsPerPage)
+                .limit(commentsPerPage);
+            console.log({ comments: comments });
             res.status(200).json({ comments });
+            return;
         }
         catch (error) {
+            console.log(error);
             res.status(500).json({ msg: 'Problema interno en el servidor' });
+            return;
         }
     }),
     favOneComment: (req, res) => __awaiter(void 0, void 0, void 0, function* () {

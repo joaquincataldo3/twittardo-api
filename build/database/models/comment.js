@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const mongoose_2 = require("mongoose");
 const modelsName_1 = require("../../utils/constants/modelsName");
-const { UserModel, TwittModel } = modelsName_1.modelsName;
+const { UserModel, TwittModel, CommentModel } = modelsName_1.modelsName;
 const commentSchema = new mongoose_2.Schema({
     comment: {
         type: String,
@@ -26,5 +26,5 @@ const commentSchema = new mongoose_2.Schema({
         required: true
     }
 });
-const model = mongoose_1.default.model('Comment', commentSchema);
+const model = mongoose_1.default.model(CommentModel, commentSchema);
 exports.default = model;

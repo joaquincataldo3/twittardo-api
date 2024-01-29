@@ -20,10 +20,9 @@ const mongoose_1 = require("mongoose");
 const modelsPath_1 = require("../utils/constants/modelsPath");
 const cloudinaryConfig_1 = require("../cloudinary/cloudinaryConfig");
 const defaultAvatar_1 = require("../utils/constants/defaultAvatar");
-// user.ts
-/// <reference path="./express.d.ts" />
+const userUtils_1 = require("../utils/constants/userUtils");
 dotenv_1.default.config();
-const { userPath, favouritePath } = modelsPath_1.modelPaths;
+const { userPath, favouritePath, twittPath } = modelsPath_1.modelPaths;
 const { default_secure_url, default_public_id } = defaultAvatar_1.defaultAvatarPaths;
 const { avatarsFolder } = cloudinaryConfig_1.folderNames;
 const controller = {
@@ -56,7 +55,7 @@ const controller = {
             const userId = req.params.userId;
             const page = String(req.query.p);
             const pageNumber = Number(page);
-            const commentsByPage = 5;
+            const favouritesPerPage = 5;
             if (isNaN(pageNumber) || pageNumber < 1) {
                 res.status(400).json({ msg: 'El número de página debe ser un número positivo.' });
                 return;
@@ -66,15 +65,16 @@ const controller = {
                 .findById(userId)
                 .populate({
                 path: favouritePath,
-                options: {
-                    skip: (pageNumber - 1) * commentsByPage,
-                    limit: commentsByPage,
-                    sort: { createdAt: -1 }
-                },
                 populate: {
-                    path: userPath
+                    path: userPath,
+                    options: {
+                        skip: (pageNumber - 1) * favouritesPerPage,
+                        limit: favouritesPerPage
+                    }
                 }
-            });
+            })
+                .populate(twittPath)
+                .select(userUtils_1.userExcludedFields);
             if (!userToFind) {
                 res.status(404).json({ msg: 'El usuario no fue encontrado' });
                 return;

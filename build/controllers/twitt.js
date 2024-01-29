@@ -21,11 +21,11 @@ const modelsPath_1 = require("../utils/constants/modelsPath");
 const cloudinaryConfig_1 = require("../cloudinary/cloudinaryConfig");
 const cloudinaryConfig_2 = require("../cloudinary/cloudinaryConfig");
 const modelsName_1 = require("../utils/constants/modelsName");
+const userUtils_1 = require("../utils/constants/userUtils");
 dotenv_1.default.config();
 const { commentPath, userPath } = modelsPath_1.modelPaths;
 const { UserModel } = modelsName_1.modelsName;
 const { twittsFolder } = cloudinaryConfig_2.folderNames;
-const userExcludedField = '-password -email';
 const controller = {
     allTwitts: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
@@ -40,15 +40,14 @@ const controller = {
                 .sort({ createdAt: -1 })
                 .skip(twittPerPage * (pageNumber - 1))
                 .limit(twittPerPage)
-                .populate(userPath, userExcludedField)
+                .populate(userPath, userUtils_1.userExcludedFields)
                 .populate({
                 path: commentPath,
                 populate: {
                     path: userPath,
-                    select: userExcludedField
+                    select: userUtils_1.userExcludedFields
                 }
             });
-            yield twitt_1.default.populate(twitts, { path: 'comments.user' });
             res.status(200).json(twitts);
             return;
         }
@@ -59,6 +58,7 @@ const controller = {
     }),
     oneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            console.log('entro');
             const twittId = req.params.twittId;
             if (!(0, mongoose_1.isValidObjectId)(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
@@ -66,15 +66,16 @@ const controller = {
             }
             const twittResponse = yield twitt_1.default
                 .findById(twittId)
-                .populate({ path: 'user', select: userExcludedField })
+                .populate({ path: 'user', select: userUtils_1.userExcludedFields })
                 .populate({
                 path: commentPath,
                 populate: {
                     path: userPath,
-                    select: userExcludedField
+                    select: userUtils_1.userExcludedFields
                 }
             });
             if (!twittResponse) {
+                console.log('entro null');
                 res.status(404).json({ msg: "Twitt no encontrado" });
                 return;
             }
@@ -96,40 +97,45 @@ const controller = {
             const twittPerPage = 5;
             if (!(0, mongoose_1.isValidObjectId)(userId)) {
                 res.status(400).json({ msg: 'Id invalido' });
+                return;
             }
             const twitts = yield twitt_1.default
                 .find({ user: userId })
                 .populate({
-                path: 'user',
-                model: UserModel // Especificar el modelo de usuario
+                path: userPath,
+                model: UserModel,
+                select: userUtils_1.userExcludedFields
             })
                 .skip((pageNumber - 1) * twittPerPage)
                 .limit(twittPerPage)
                 .sort({ createdAt: -1 });
-            console.log(twitts);
             res.status(200).json({ twitts });
+            return;
         }
         catch (error) {
+            console.log(error);
             res.status(500).json({ msg: 'Problema interno en el servidor' });
+            return;
         }
     }),
     favOneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const twittId = req.params.twittId;
             const userId = req.params.userId;
+            console.log(twittId);
             if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
                 return;
             }
             yield twitt_1.default.findByIdAndUpdate(userId, {
-                $addToSet: {
-                    favourites: twittId
-                },
+                $inc: {
+                    favourites: 1
+                }
             }, {
                 new: true
             });
             yield user_1.default.findByIdAndUpdate(userId, {
-                $addToSet: {
+                $push: {
                     favourites: twittId
                 },
             }, {
