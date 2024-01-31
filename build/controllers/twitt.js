@@ -23,7 +23,7 @@ const cloudinaryConfig_2 = require("../cloudinary/cloudinaryConfig");
 const modelsName_1 = require("../utils/constants/modelsName");
 const userUtils_1 = require("../utils/constants/userUtils");
 dotenv_1.default.config();
-const { commentPath, userPath } = modelsPath_1.modelPaths;
+const { commentPath, userPath, favouritePath } = modelsPath_1.modelPaths;
 const { UserModel } = modelsName_1.modelsName;
 const { twittsFolder } = cloudinaryConfig_2.folderNames;
 const controller = {
@@ -38,16 +38,18 @@ const controller = {
             const twitts = yield twitt_1.default
                 .find()
                 .sort({ createdAt: -1 })
-                .skip(twittPerPage * (pageNumber - 1))
-                .limit(twittPerPage)
-                .populate(userPath, userUtils_1.userExcludedFields)
+                .limit(twittPerPage * pageNumber)
+                .populate({
+                path: userPath
+            })
                 .populate({
                 path: commentPath,
                 populate: {
                     path: userPath,
                     select: userUtils_1.userExcludedFields
                 }
-            });
+            })
+                .exec();
             res.status(200).json(twitts);
             return;
         }
@@ -58,7 +60,6 @@ const controller = {
     }),
     oneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            console.log('entro');
             const twittId = req.params.twittId;
             if (!(0, mongoose_1.isValidObjectId)(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
@@ -121,19 +122,40 @@ const controller = {
     favOneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const twittId = req.params.twittId;
-            const userId = req.params.userId;
-            console.log(twittId);
+            const userId = req.user._id;
             if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
                 return;
             }
-            yield twitt_1.default.findByIdAndUpdate(userId, {
+            const user = yield user_1.default
+                .findById(userId)
+                .populate(favouritePath);
+            if (!user) {
+                res.status(404).json({ msg: 'Usuario no encontrado' });
+                return;
+            }
+            let isTwittInFav = false;
+            user.favourites.forEach((fav) => {
+                const favValue = fav._id.valueOf();
+                if (favValue === twittId) {
+                    isTwittInFav = true;
+                }
+            });
+            if (isTwittInFav) {
+                res.status(409).json({ msg: 'El twitt ya se encuentra faveado' });
+                return;
+            }
+            const updatedTwitt = yield twitt_1.default.findByIdAndUpdate(twittId, {
                 $inc: {
                     favourites: 1
                 }
             }, {
                 new: true
             });
+            if (!updatedTwitt) {
+                res.status(404).json({ msg: 'Twitt no encontrado' });
+                return;
+            }
             yield user_1.default.findByIdAndUpdate(userId, {
                 $push: {
                     favourites: twittId
@@ -152,16 +174,17 @@ const controller = {
     unfavOneTwitt: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const twittId = req.params.twittId;
-            const userId = req.params.userId;
+            const userId = req.user._id;
             if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
             }
-            yield twitt_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: -1 } }, { new: true });
-            yield user_1.default.findByIdAndUpdate(userId, {
+            const twitt = yield twitt_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: -1 } }, { new: true });
+            const user = yield user_1.default.findByIdAndUpdate(userId, {
                 $pull: {
                     favourites: twittId,
                 },
             }, { new: true });
+            console.log(twitt, user);
             res.status(200).json({ msg: 'Desfaveado satisfactoriamente' });
             return;
         }
