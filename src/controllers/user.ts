@@ -209,7 +209,8 @@ const controller = {
             if (userAccessToken) {
                 const userToFind = await User
                     .findById(userInRequest._id)
-                    .populate('twitts')
+                    .populate(twittPath)
+                    .populate(favouritePath)
                 if (!userToFind) {
                     res.status(404).json({ msg: "Usuario no encontrado" });
                     return;

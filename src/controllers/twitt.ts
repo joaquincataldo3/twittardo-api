@@ -13,7 +13,7 @@ import { userExcludedFields } from '../utils/constants/userUtils';
 
 dotenv.config()
 
-const { commentPath, userPath } = modelPaths;
+const { commentPath, userPath, favouritePath} = modelPaths;
 const {UserModel } = modelsName;
 const { twittsFolder } = folderNames;
 
@@ -30,9 +30,10 @@ const controller = {
             const twitts = await Twitt
                 .find()
                 .sort({ createdAt: -1 })
-                .skip(twittPerPage * (pageNumber - 1))
-                .limit(twittPerPage)
-                .populate(userPath, userExcludedFields)
+                .limit(twittPerPage * pageNumber)
+                .populate({
+                    path: userPath
+                })
                 .populate({
                     path: commentPath,
                     populate: {
@@ -40,6 +41,7 @@ const controller = {
                         select: userExcludedFields
                     }
                 })
+                .exec()
             res.status(200).json(twitts);
             return;
         } catch (error) {
@@ -50,7 +52,6 @@ const controller = {
     },
     oneTwitt: async (req: Request, res: Response): Promise<void> => {
         try {
-            console.log('entro')
             const twittId: string = req.params.twittId
             if (!isValidObjectId(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
@@ -82,7 +83,6 @@ const controller = {
     },
     twittsByUser: async (req: Request, res: Response): Promise<void> => {
         try {
-         
             const userId = req.params.userId;
             const page: string = String(req.query.p);
             const pageNumber: number = Number(page);
@@ -112,13 +112,30 @@ const controller = {
     favOneTwitt: async (req: Request, res: Response): Promise<void> => {
         try {
             const twittId = req.params.twittId;
-            const userId = req.params.userId;
-            console.log(twittId);
+            const userId = req.user._id;
             if (!isValidObjectId(userId) || !isValidObjectId(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
                 return;
             }
-            await Twitt.findByIdAndUpdate(userId,
+            const user = await User
+            .findById(userId)
+            .populate(favouritePath);
+            if(!user){
+                res.status(404).json({msg: 'Usuario no encontrado'});
+                return;
+            }
+            let isTwittInFav = false;
+            user.favourites.forEach((fav: any): void  => {
+                const favValue = fav._id.valueOf();
+                if(favValue === twittId) {
+                    isTwittInFav = true;
+                }
+            })
+            if(isTwittInFav) {
+                res.status(409).json({msg: 'El twitt ya se encuentra faveado'});
+                return;
+            }
+            const updatedTwitt = await Twitt.findByIdAndUpdate(twittId,
                 {
                     $inc: {
                         favourites: 1
@@ -128,6 +145,10 @@ const controller = {
                     new: true
                 }
             );
+            if(!updatedTwitt){
+                res.status(404).json({msg: 'Twitt no encontrado'});
+                return;
+            }
             await User.findByIdAndUpdate(userId,
                 {
                     $push: {
@@ -146,16 +167,16 @@ const controller = {
     unfavOneTwitt: async (req: Request, res: Response): Promise<void> => {
         try {
             const twittId = req.params.twittId;
-            const userId = req.params.userId;
+            const userId = req.user._id;
             if (!isValidObjectId(userId) || !isValidObjectId(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
             }
-            await Twitt.findByIdAndUpdate(
+            const twitt = await Twitt.findByIdAndUpdate(
                 twittId,
                 { $inc: { favourites: -1 } },
                 { new: true }
             );
-            await User.findByIdAndUpdate(
+            const user = await User.findByIdAndUpdate(
                 userId,
                 {
                     $pull: {
@@ -164,6 +185,7 @@ const controller = {
                 },
                 { new: true }
             );
+            console.log(twitt, user)
             res.status(200).json({ msg: 'Desfaveado satisfactoriamente' });
             return;
         } catch (error) {

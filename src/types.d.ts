@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request } from 'express';
 import { Model, Document } from 'mongoose'
 
 // Extiende el tipo SessionData para incluir userLoggedId
@@ -94,4 +94,3 @@ export interface ModelPaths {
 }
 
 export type PORT = string | number
-

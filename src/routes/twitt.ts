@@ -12,8 +12,8 @@ router.get('/by-user/:userId',  twittController.twittsByUser);
 
 router.post('/create', verifyToken, verifyUserOrAdmin, twittController.createTwitt);
 
-router.put('/add-fav/:twittId/:userId', verifyToken, twittController.favOneTwitt);
-router.put('/undo-fav/:twittId/:userId', verifyToken, twittController.favOneTwitt);
+router.put('/add-fav/:twittId', verifyToken, twittController.favOneTwitt);
+router.put('/undo-fav/:twittId', verifyToken, twittController.favOneTwitt);
 
 router.delete('/:twittId/delete', verifyToken, verifyUserOrAdmin, twittController.createTwitt);
 
