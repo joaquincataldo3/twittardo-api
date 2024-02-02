@@ -14,7 +14,8 @@ router.post('/login', userController.processLogin);
 
 router.put('/:userId/update', verifyToken, verifyUserOrAdmin, userController.follow);
 router.put('/:userId/toAdmin', verifyToken, userController.convertUserToAdmin);
-router.put('/:userBFId/:userWFId/follow', verifyToken, userController.follow);
+router.put('/:userId/follow', verifyToken, userController.follow);
+router.put('/:userId/unfollow', verifyToken, userController.unfollow);
 
 
 router.delete('/:userId', verifyToken, verifyUserOrAdmin, userController.deleteUser);

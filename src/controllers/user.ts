@@ -13,7 +13,7 @@ import { userExcludedFields } from '../utils/constants/userUtils';
 
 dotenv.config();
 
-const { userPath  , favouritePath, twittPath } = modelPaths; 
+const { userPath, favouritePath, twittPath } = modelPaths;
 const { default_secure_url, default_public_id } = defaultAvatarPaths;
 const { avatarsFolder } = folderNames;
 
@@ -29,6 +29,8 @@ const controller = {
             const userToFind = await User
                 .findById(id)
                 .select('-password')
+                .populate('following')
+                .populate('followers');
             if (!userToFind) {
                 res.status(404).json({ msg: 'El usuario no fue encontrado' });
                 return;
@@ -59,10 +61,10 @@ const controller = {
                     populate: {
                         path: userPath,
                         options: {
-                            skip: (pageNumber - 1) * favouritesPerPage, 
-                            limit: favouritesPerPage 
+                            skip: (pageNumber - 1) * favouritesPerPage,
+                            limit: favouritesPerPage
                         }
-                    } 
+                    }
                 })
                 .populate(twittPath)
                 .select(userExcludedFields)
@@ -81,30 +83,65 @@ const controller = {
     },
     follow: async (req: Request, res: Response): Promise<void> => {
         try {
-            const userBeingFollowedId: string = req.params.userBFId;
-            const userWantingToFollowId: string = req.params.userWFId;
+            const userToFollowId: string = req.params.userId;
+            const userWantingToFollowId: string = req.user._id;
 
-            if (!isValidObjectId(userBeingFollowedId) || !isValidObjectId(userWantingToFollowId)) {
-                res.status(400).json({ msg: 'Id de usuarios invalidos' })
+            if (!isValidObjectId(userToFollowId) || !isValidObjectId(userWantingToFollowId)) {
+                res.status(400).json({ msg: 'Id de usuarios invalidos' });
+                return;
             }
 
-            const getUserBeingFollowed = await User.findById(userBeingFollowedId);
+            const getUserBeingFollowed = await User.findById(userToFollowId);
             const getUserWantingToFollow = await User.findById(userWantingToFollowId);
 
             if (!getUserBeingFollowed || !getUserWantingToFollow) {
+                res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' });
+                return;
+            }
+
+            await User.findByIdAndUpdate(
+                userToFollowId,
+                { $addToSet: { followers: userWantingToFollowId } },
+                { new: true }
+            );
+
+            await User.findByIdAndUpdate(
+                userWantingToFollowId,
+                { $addToSet: { following: userToFollowId } },
+                { new: true }
+            );
+            res.status(201).json({ msg: 'Usuario seguido satisfactoriamente' });
+            return;
+        } catch (error) {
+            res.status(500).json({ msg: 'Error mientras se seguía al usuario' });
+            return;
+        }
+    },
+    unfollow: async (req: Request, res: Response): Promise<void> => {
+        try {
+            const userToFollowId: string = req.params.userId;
+            const userWantingToFollowId: string = req.user._id;
+
+            if (!isValidObjectId(userToFollowId) || !isValidObjectId(userWantingToFollowId)) {
+                res.status(400).json({ msg: 'Id de usuarios invalidos' })
+            }
+
+            const getUserToFollowId = await User.findById(userToFollowId);
+            const getUserWantingToFollow = await User.findById(userWantingToFollowId);
+
+            if (!getUserToFollowId || !getUserWantingToFollow) {
                 res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' })
             }
 
-
             const UserBeingFollowedUpdated = await User.findByIdAndUpdate(
-                userBeingFollowedId,
-                { $addToSet: { followers: userWantingToFollowId } },
+                userToFollowId,
+                { $pull: { followers: userWantingToFollowId } },
                 { new: true }
             );
 
             const userFollowingUpdated = await User.findByIdAndUpdate(
                 userWantingToFollowId,
-                { $addToSet: { following: userBeingFollowedId } },
+                { $pull: { following: userToFollowId } },
                 { new: true }
             );
             res.status(201).json({ userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated })
@@ -136,6 +173,7 @@ const controller = {
             delete userVerified.password;
             const token = jwt.sign({ ...userVerified }, secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
+            console.log({ cookies: req.cookies })
             req.session.userLogged = userVerified;
             res.status(200).json({ userVerified, token });
             return;
@@ -211,6 +249,9 @@ const controller = {
                     .findById(userInRequest._id)
                     .populate(twittPath)
                     .populate(favouritePath)
+                    .populate('following')
+                    .populate('followers');
+
                 if (!userToFind) {
                     res.status(404).json({ msg: "Usuario no encontrado" });
                     return;

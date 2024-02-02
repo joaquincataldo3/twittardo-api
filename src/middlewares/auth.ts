@@ -36,7 +36,6 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
         })     
     }
     return;
-
 }
 
 const verifyUserOrAdmin = async (req: Request, res: Response, next: NextFunction) => {

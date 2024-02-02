@@ -5,5 +5,5 @@ export const modelPaths: IModelPaths = {
     twittPath: 'twitts',
     userPath: 'user',
     favouritePath: 'favourites',
-    twittCommentedPath: 'twittCommented',
+    twittCommentedPath: 'twittCommented'
 }
