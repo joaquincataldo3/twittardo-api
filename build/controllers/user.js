@@ -36,7 +36,9 @@ const controller = {
             // busco el usuario y traigo los 5 primeros resultados de cada campo
             const userToFind = yield user_1.default
                 .findById(id)
-                .select('-password');
+                .select('-password')
+                .populate('following')
+                .populate('followers');
             if (!userToFind) {
                 res.status(404).json({ msg: 'El usuario no fue encontrado' });
                 return;
@@ -90,18 +92,42 @@ const controller = {
     }),
     follow: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const userBeingFollowedId = req.params.userBFId;
-            const userWantingToFollowId = req.params.userWFId;
-            if (!(0, mongoose_1.isValidObjectId)(userBeingFollowedId) || !(0, mongoose_1.isValidObjectId)(userWantingToFollowId)) {
+            const userToFollowId = req.params.userId;
+            const userWantingToFollowId = req.user._id;
+            if (!(0, mongoose_1.isValidObjectId)(userToFollowId) || !(0, mongoose_1.isValidObjectId)(userWantingToFollowId)) {
                 res.status(400).json({ msg: 'Id de usuarios invalidos' });
+                return;
             }
-            const getUserBeingFollowed = yield user_1.default.findById(userBeingFollowedId);
+            const getUserBeingFollowed = yield user_1.default.findById(userToFollowId);
             const getUserWantingToFollow = yield user_1.default.findById(userWantingToFollowId);
             if (!getUserBeingFollowed || !getUserWantingToFollow) {
                 res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' });
+                return;
             }
-            const UserBeingFollowedUpdated = yield user_1.default.findByIdAndUpdate(userBeingFollowedId, { $addToSet: { followers: userWantingToFollowId } }, { new: true });
-            const userFollowingUpdated = yield user_1.default.findByIdAndUpdate(userWantingToFollowId, { $addToSet: { following: userBeingFollowedId } }, { new: true });
+            yield user_1.default.findByIdAndUpdate(userToFollowId, { $addToSet: { followers: userWantingToFollowId } }, { new: true });
+            yield user_1.default.findByIdAndUpdate(userWantingToFollowId, { $addToSet: { following: userToFollowId } }, { new: true });
+            res.status(201).json({ msg: 'Usuario seguido satisfactoriamente' });
+            return;
+        }
+        catch (error) {
+            res.status(500).json({ msg: 'Error mientras se seguía al usuario' });
+            return;
+        }
+    }),
+    unfollow: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const userToFollowId = req.params.userId;
+            const userWantingToFollowId = req.user._id;
+            if (!(0, mongoose_1.isValidObjectId)(userToFollowId) || !(0, mongoose_1.isValidObjectId)(userWantingToFollowId)) {
+                res.status(400).json({ msg: 'Id de usuarios invalidos' });
+            }
+            const getUserToFollowId = yield user_1.default.findById(userToFollowId);
+            const getUserWantingToFollow = yield user_1.default.findById(userWantingToFollowId);
+            if (!getUserToFollowId || !getUserWantingToFollow) {
+                res.status(404).json({ msg: 'Uno de los dos usuarios no fue encontrado' });
+            }
+            const UserBeingFollowedUpdated = yield user_1.default.findByIdAndUpdate(userToFollowId, { $pull: { followers: userWantingToFollowId } }, { new: true });
+            const userFollowingUpdated = yield user_1.default.findByIdAndUpdate(userWantingToFollowId, { $pull: { following: userToFollowId } }, { new: true });
             res.status(201).json({ userFollowed: UserBeingFollowedUpdated, userFollowing: userFollowingUpdated });
         }
         catch (error) {
@@ -131,6 +157,7 @@ const controller = {
             delete userVerified.password;
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
+            console.log({ cookies: req.cookies });
             req.session.userLogged = userVerified;
             res.status(200).json({ userVerified, token });
             return;
@@ -206,7 +233,9 @@ const controller = {
                 const userToFind = yield user_1.default
                     .findById(userInRequest._id)
                     .populate(twittPath)
-                    .populate(favouritePath);
+                    .populate(favouritePath)
+                    .populate('following')
+                    .populate('followers');
                 if (!userToFind) {
                     res.status(404).json({ msg: "Usuario no encontrado" });
                     return;

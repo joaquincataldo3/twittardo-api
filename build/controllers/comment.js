@@ -73,15 +73,16 @@ const controller = {
             const comments = yield comment_1.default
                 .find({ user: userId })
                 .populate(userPath)
-                .populate(twittCommentedPath)
+                .populate({
+                path: twittCommentedPath,
+                populate: userPath
+            })
                 .skip((pageNumber - 1) * commentsPerPage)
                 .limit(commentsPerPage);
-            console.log({ comments: comments });
             res.status(200).json({ comments });
             return;
         }
         catch (error) {
-            console.log(error);
             res.status(500).json({ msg: 'Problema interno en el servidor' });
             return;
         }

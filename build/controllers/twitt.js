@@ -76,7 +76,6 @@ const controller = {
                 }
             });
             if (!twittResponse) {
-                console.log('entro null');
                 res.status(404).json({ msg: "Twitt no encontrado" });
                 return;
             }
@@ -114,7 +113,6 @@ const controller = {
             return;
         }
         catch (error) {
-            console.log(error);
             res.status(500).json({ msg: 'Problema interno en el servidor' });
             return;
         }
@@ -178,13 +176,12 @@ const controller = {
             if (!(0, mongoose_1.isValidObjectId)(userId) || !(0, mongoose_1.isValidObjectId)(twittId)) {
                 res.status(400).json({ msg: 'Twitt o usuario id invalido' });
             }
-            const twitt = yield twitt_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: -1 } }, { new: true });
-            const user = yield user_1.default.findByIdAndUpdate(userId, {
+            yield twitt_1.default.findByIdAndUpdate(twittId, { $inc: { favourites: -1 } }, { new: true });
+            yield user_1.default.findByIdAndUpdate(userId, {
                 $pull: {
                     favourites: twittId,
                 },
             }, { new: true });
-            console.log(twitt, user);
             res.status(200).json({ msg: 'Desfaveado satisfactoriamente' });
             return;
         }
