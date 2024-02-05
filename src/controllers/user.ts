@@ -173,7 +173,6 @@ const controller = {
             delete userVerified.password;
             const token = jwt.sign({ ...userVerified }, secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
-            console.log({ cookies: req.cookies })
             req.session.userLogged = userVerified;
             res.status(200).json({ userVerified, token });
             return;
@@ -186,7 +185,7 @@ const controller = {
     register: (async (req: Request, res: Response): Promise<void> => {
         try {
             const { email, username, password }: IRegisterUser = req.body
-            const avatar = req.file as Express.Multer.File
+
             if (!email || !username || !password) {
                 res.status(400).json({ msg: 'Es necesario completar los campos solicitados' })
                 return;
@@ -203,8 +202,10 @@ const controller = {
             }
             const hashPassword = await bcrypt.hash(password, 10)
             let result: IImage;
-            if (avatar) {
-                result = await handleUploadImage(avatar.path, avatarsFolder);
+            if (req.files) {
+                const files = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
+                const file = files[0];
+                result = await handleUploadImage(file.tempFilePath, avatarsFolder);
             } else {
                 result = {
                     secure_url: default_secure_url,
@@ -277,17 +278,19 @@ const controller = {
                 res.status(400).json({ msg: 'Id de usuario invalido' })
                 return;
             }
-            const userToFind = await User.findById(userId)
+            const userToFind = await User.findById(userId);
             if (!userToFind) {
                 res.status(404).json({ msg: 'Usuario no encontrado' })
                 return;
             } else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
-                const bodyAvatar = req.file;
+
                 let result: IImage;
-                await handleDeleteImage(user.avatar);
-                if (bodyAvatar) {
-                    result = await handleUploadImage(bodyAvatar.path, avatarsFolder);
+                await handleDeleteImage(user.image.public_id);
+                if (req.files) {
+                    const files = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
+                    const file = files[0];
+                    result = await handleUploadImage(file.tempFilePath, avatarsFolder);
                 } else {
                     result = {
                         secure_url: default_secure_url,
@@ -301,12 +304,14 @@ const controller = {
                     isAdmin: 0,
                     image: result
                 }
-                const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true })
-                res.status(200).json(updatedUser)
+                const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true });
+                console.log(updatedUser)
+                res.status(200).json(updatedUser);
                 return;
             }
 
         } catch (error) {
+            console.log(error)
             res.status(500).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` })
             return;
         }

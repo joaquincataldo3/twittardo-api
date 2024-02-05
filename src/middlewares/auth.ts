@@ -50,7 +50,6 @@ const verifyUserOrAdmin = async (req: Request, res: Response, next: NextFunction
         next();
         return;
     } catch (error) {
-
         return res.status(400).json({ msg: `Problema mientras se verificaba usuario o admin: ${error}` })
     }
 }

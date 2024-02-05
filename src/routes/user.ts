@@ -12,7 +12,7 @@ router.get('/favourites/:userId', userController.getFavouritesByUser);
 router.post('/register',  userController.register);
 router.post('/login', userController.processLogin);
 
-router.put('/:userId/update', verifyToken, verifyUserOrAdmin, userController.follow);
+router.put('/:userId/update', verifyToken, verifyUserOrAdmin, userController.updateUser);
 router.put('/:userId/toAdmin', verifyToken, userController.convertUserToAdmin);
 router.put('/:userId/follow', verifyToken, userController.follow);
 router.put('/:userId/unfollow', verifyToken, userController.unfollow);

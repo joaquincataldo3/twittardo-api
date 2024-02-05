@@ -157,7 +157,6 @@ const controller = {
             delete userVerified.password;
             const token = jsonwebtoken_1.default.sign(Object.assign({}, userVerified), secretKey);
             res.cookie('user_access_token', token, { httpOnly: true, secure: false });
-            console.log({ cookies: req.cookies });
             req.session.userLogged = userVerified;
             res.status(200).json({ userVerified, token });
             return;
