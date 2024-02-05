@@ -169,7 +169,6 @@ const controller = {
     register: ((req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { email, username, password } = req.body;
-            const avatar = req.file;
             if (!email || !username || !password) {
                 res.status(400).json({ msg: 'Es necesario completar los campos solicitados' });
                 return;
@@ -186,8 +185,10 @@ const controller = {
             }
             const hashPassword = yield bcryptjs_1.default.hash(password, 10);
             let result;
-            if (avatar) {
-                result = yield (0, cloudinaryConfig_1.handleUploadImage)(avatar.path, avatarsFolder);
+            if (req.files) {
+                const files = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
+                const file = files[0];
+                result = yield (0, cloudinaryConfig_1.handleUploadImage)(file.tempFilePath, avatarsFolder);
             }
             else {
                 result = {
@@ -267,11 +268,12 @@ const controller = {
             }
             else { // i had to do this because userToFind is possibly null
                 const user = userToFind;
-                const bodyAvatar = req.file;
                 let result;
-                yield (0, cloudinaryConfig_1.handleDeleteImage)(user.avatar);
-                if (bodyAvatar) {
-                    result = yield (0, cloudinaryConfig_1.handleUploadImage)(bodyAvatar.path, avatarsFolder);
+                yield (0, cloudinaryConfig_1.handleDeleteImage)(user.image.public_id);
+                if (req.files) {
+                    const files = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
+                    const file = files[0];
+                    result = yield (0, cloudinaryConfig_1.handleUploadImage)(file.tempFilePath, avatarsFolder);
                 }
                 else {
                     result = {
@@ -287,11 +289,13 @@ const controller = {
                     image: result
                 };
                 const updatedUser = yield user_1.default.findByIdAndUpdate(userId, dataToUpdate, { new: true });
+                console.log(updatedUser);
                 res.status(200).json(updatedUser);
                 return;
             }
         }
         catch (error) {
+            console.log(error);
             res.status(500).json({ msg: `Problema mientras se hacía una actualización del usuario: ${error}` });
             return;
         }

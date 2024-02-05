@@ -14,7 +14,7 @@ router.get('/:userId', user_1.default.oneUser);
 router.get('/favourites/:userId', user_1.default.getFavouritesByUser);
 router.post('/register', user_1.default.register);
 router.post('/login', user_1.default.processLogin);
-router.put('/:userId/update', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.follow);
+router.put('/:userId/update', auth_1.verifyToken, auth_1.verifyUserOrAdmin, user_1.default.updateUser);
 router.put('/:userId/toAdmin', auth_1.verifyToken, user_1.default.convertUserToAdmin);
 router.put('/:userId/follow', auth_1.verifyToken, user_1.default.follow);
 router.put('/:userId/unfollow', auth_1.verifyToken, user_1.default.unfollow);
