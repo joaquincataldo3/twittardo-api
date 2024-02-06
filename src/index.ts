@@ -10,6 +10,7 @@ import cors from 'cors';
 import path from 'path';
 import session from 'express-session';
 import fileUpload from 'express-fileupload';
+import { tempFilePath } from './utils/constants/userUtils';
 dotenv.config();
 
 declare module 'express' {
@@ -25,7 +26,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET!;
 app.use('/images', express.static(path.join(__dirname, '../')));
 app.use(fileUpload({
     useTempFiles : true,
-    tempFileDir : './src/tmpUploads',
+    tempFileDir : tempFilePath,
     debug: true
 }));
 app.use(cookieParser())

@@ -10,6 +10,7 @@ import { handleDeleteImage, handleUploadImage } from '../cloudinary/cloudinaryCo
 import { folderNames } from '../cloudinary/cloudinaryConfig';
 import { modelsName } from '../utils/constants/modelsName';
 import { userExcludedFields } from '../utils/constants/userUtils';
+import { deleteTempFiles } from '../utils/functions/deleteTempFiles';
 
 dotenv.config()
 
@@ -223,6 +224,8 @@ const controller = {
                 new: true
             })
             res.status(200).json(newTwitt);
+            deleteTempFiles();
+            return;
         } catch (error) {
             res.status(500).json({ msg: `Problema mientras se creaba un twitt` });
             return;

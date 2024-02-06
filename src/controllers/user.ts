@@ -10,6 +10,7 @@ import { modelPaths } from '../utils/constants/modelsPath';
 import { folderNames, handleDeleteImage, handleUploadImage } from '../cloudinary/cloudinaryConfig';
 import { defaultAvatarPaths } from '../utils/constants/defaultAvatar';
 import { userExcludedFields } from '../utils/constants/userUtils';
+import { deleteTempFiles } from '../utils/functions/deleteTempFiles';
 
 dotenv.config();
 
@@ -223,6 +224,7 @@ const controller = {
             let newUserObject = newUser.toObject();
             delete newUserObject.password;
             res.status(201).json(newUserObject);
+            deleteTempFiles();
             return;
         } catch (error) {
             res.status(400).json({ msg: `Problema mientras se registraba el usuario: ${error}` });
@@ -305,8 +307,8 @@ const controller = {
                     image: result
                 }
                 const updatedUser = await User.findByIdAndUpdate(userId, dataToUpdate, { new: true });
-                console.log(updatedUser)
                 res.status(200).json(updatedUser);
+                deleteTempFiles();
                 return;
             }
 
